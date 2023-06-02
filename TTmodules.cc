@@ -296,6 +296,20 @@ RVec<int> PickDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi,
     return {ph1Idx,ph2Idx};
 }
 
+RVec<int> FindMothersPdgId(RVec<int> id, RVec<int> idM) {
+    RVec<int> motherId;
+    int icurrM;
+    for (int i = 0; i < idM.size(); i++) {
+     icurrM = idM[i];
+     if (icurrM>=0) {
+      motherId[i] = id[icurrM];
+     } else {
+      motherId[i] = -1;
+     }
+    }
+    return {motherId};
+}
+
 RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
@@ -303,18 +317,32 @@ RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> ph
     float dR = -1.0;
     float pt1 = -1.0;
     float pt2 = -1.0;
+    RVec<int> motherId=idM;
+    int icurrM;
     ROOT::Math::PtEtaPhiMVector Lsum;
     ROOT::Math::PtEtaPhiMVector Lvector1;
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+
+    for (int i = 0; i < idM.size(); i++) {
+     icurrM = idM[i];
+     if (icurrM>=0) {
+      motherId[i] = id[icurrM];
+     } else {
+      motherId[i] = -1;
+     }
+    }
+
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(motherId[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
+//     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+//     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -401,21 +429,35 @@ float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
     float dR = -1.0;
     float pt1 = -1.0;
     float pt2 = -1.0;
+    int icurrM= -1;
+    RVec<int> motherId=idM;
     ROOT::Math::PtEtaPhiMVector Lsum;
     ROOT::Math::PtEtaPhiMVector Lvector1;
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
-    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
-       pt1 = pt[iph1];
-       ph1Idx = iph1;
+
+    for (int i = 0; i < idM.size(); i++) {
+     icurrM = idM[i];
+     if (icurrM>=0) {
+      motherId[i] = id[icurrM];
+     } else {
+      motherId[i] = -1;
      }
     }
+
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+      if ((id[iph1]==IdUse)&&(motherId[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
+//      if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+        pt1 = pt[iph1];
+        ph1Idx = iph1;
+      }
+    }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
-       pt2 = pt[iph2];
-       ph2Idx = iph2;
-     }
+      if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+//      if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+        pt2 = pt[iph2];
+        ph2Idx = iph2;
+      }
     }
     if ((ph1Idx>-1)&&(ph2Idx>-1)) {
      Lvector1 = Lvector[ph1Idx];
@@ -499,18 +541,31 @@ float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<flo
     float dR = -1.0; 
     float pt1 = -1.0;
     float pt2 = -1.0;
+    RVec<int> motherId=idM;
+    int icurrM;
     ROOT::Math::PtEtaPhiMVector Lsum;
     ROOT::Math::PtEtaPhiMVector Lvector1;
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+
+    for (int i = 0; i < idM.size(); i++) {
+     icurrM = idM[i];
+     if (icurrM>=0) {
+      motherId[i] = id[icurrM];
+     } else {
+      motherId[i] = -1;
+     }
+    }
+
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(motherId[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
+
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
