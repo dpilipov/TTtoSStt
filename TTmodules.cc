@@ -296,7 +296,7 @@ RVec<int> PickDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi,
     return {ph1Idx,ph2Idx};
 }
 
-RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -308,13 +308,13 @@ RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> ph
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -394,7 +394,7 @@ float SmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<fl
     return Smass;
 }
 
-float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -406,13 +406,13 @@ float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(idM[iphi2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -492,7 +492,7 @@ float dRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float
     return dR;
 }
 
-float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -504,13 +504,13 @@ float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<flo
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(idM[iphi2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }

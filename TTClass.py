@@ -225,13 +225,13 @@ class TTClass:
     def analysis1(self):
         self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
         self.a.Define('SidsAA_LNL','PickDiphotonsLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGidsAA_LNL','PickBGDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
+        self.a.Define('BGidsAA_LNL','PickBGDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
         self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
         self.a.Define('SmassAA_LNL','SmassCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGmassAA_LNL','BGmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
+        self.a.Define('BGmassAA_LNL','BGmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
         self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
         self.a.Define('dRAA_LNL','dRCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGdRAA_LNL','BGdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
+        self.a.Define('BGdRAA_LNL','BGdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
