@@ -308,7 +308,7 @@ RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> ph
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
@@ -406,13 +406,13 @@ float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(idM[iphi2]==IdMUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -504,13 +504,13 @@ float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<flo
     ROOT::Math::PtEtaPhiMVector Lvector2;
     RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
-     if ((id[iph1]==IdUse)&&(idM[iphi1]==IdMUse)&&(pt[iph1]>pt1)) {
+     if ((id[iph1]==IdUse)&&(idM[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
        pt1 = pt[iph1];
        ph1Idx = iph1;
      }
     }
     for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(idM[iphi2]==IdMUse)&&(pt[iph2]>pt2)) {
+     if ((id[iph2]==IdUse)&&(idM[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
