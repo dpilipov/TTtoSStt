@@ -223,9 +223,15 @@ class TTClass:
 	return self.a.GetActiveNode()
 #DP EDIT
     def analysis1(self):
-        self.a.Define('diphotonIds','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+        self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+        self.a.Define('SidsAA_LNL','PickDiphotonsLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('BGidsAA_LNL','PickBGDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
         self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+        self.a.Define('SmassAA_LNL','SmassCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('BGmassAA_LNL','BGmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
         self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+        self.a.Define('dRAA_LNL','dRCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('BGdRAA_LNL','BGdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22)')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
@@ -237,7 +243,13 @@ class TTClass:
         columns = [
             'SmassAA', #DP EDIT
             'dRAA', #DP EDIT
-            'diphotonIds', #DP EDIT
+            'SidsAA', #DP EDIT
+            'SmassAA_LNL', #DP EDIT
+            'dRAA_LNL', #DP EDIT
+            'SidsAA_LNL', #DP EDIT
+            'BGmassAA_LNL', #DP EDIT
+            'BGdRAA_LNL', #DP EDIT
+            'BGidsAA_LNL', #DP EDIT
 	    'FatJet_pt', # keep this so that we can calculate the HT 
             'Dijet_eta','Dijet_msoftdrop','Dijet_pt','Dijet_phi',
             'Dijet_deepTagMD_HbbvsQCD', 'Dijet_deepTagMD_ZHbbvsQCD',

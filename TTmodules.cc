@@ -262,6 +262,74 @@ RVec<int> PickDiphotons(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
     return {ph0Idx,ph1Idx};
 }
 
+RVec<int> PickDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if (pt[iph1]>pt1) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if (pt[iph2]>pt2) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return {ph1Idx,ph2Idx};
+}
+
+RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return {ph1Idx,ph2Idx};
+}
+
 float SmassCalc(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, float SmassTarget) {
     int ph0Idx = -1;
     int ph1Idx = -1;
@@ -292,6 +360,74 @@ float SmassCalc(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> ma
     return Smass;
 }
 
+float SmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if (pt[iph1]>pt1) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if (pt[iph2]>pt2) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return Smass;
+}
+
+float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return Smass;
+}
+
 float dRCalc(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, float SmassTarget) {
     int ph0Idx = -1;
     int ph1Idx = -1; 
@@ -318,6 +454,74 @@ float dRCalc(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass,
           dR = hardware::DeltaR(Lvector1,Lvector2);
        }
      }
+    }
+    return dR;
+}
+
+float dRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if (pt[iph1]>pt1) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if (pt[iph2]>pt2) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return dR;
+}
+
+float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0; 
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    for (int iph1 = 0; iph1 < pt.size(); iph1++) {
+     if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
+       pt1 = pt[iph1];
+       ph1Idx = iph1;
+     }
+    }
+    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
+     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+       pt2 = pt[iph2];
+       ph2Idx = iph2;
+     }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
     }
     return dR;
 }

@@ -1,1 +1,1 @@
-/uscms/home/dpilipov/nobackup/SA1/CMSSW_10_6_28/src/PhysicsTools/NanoAODTools/B2G-RunIISummer20UL16NanoAODv9-01446.root
+/uscms/home/dpilipov/nobackup/TIMBER/CMSSW_11_1_4/src/TTtoSStt/B2G-RunIISummer20UL16NanoAODv9_SIGNAL_800_200_S0toAA.root
