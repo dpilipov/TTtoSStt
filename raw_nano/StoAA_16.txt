@@ -1,1 +1,1 @@
-/uscms/home/dpilipov/nobackup/TIMBER/CMSSW_11_1_4/src/TTtoSStt/B2G-RunIISummer20UL16NanoAODv9_SIGNAL_800_200_S0toAA.root
+/uscms/home/dpilipov/nobackup/TIMBER/CMSSW_11_1_4/src/TTtoSStt/B2G-RunIISummer20UL16NanoAODv9_SIGNAL_600_200_S0toAA.root

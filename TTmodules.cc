@@ -279,11 +279,39 @@ RVec<int> PickDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi,
        ph1Idx = iph1;
      }
     }
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if (pt[iph2]>pt2) {
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+     if ((iph2!=ph1Idx)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return {ph1Idx,ph2Idx};
+}
+
+RVec<int> PickDiphotonsLeadingOrdered(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    if (pt.size()>1) {
+       pt1 = pt[0];
+       ph1Idx = 0;
+       pt2 = pt[1];
+       ph2Idx = 1;
     }
     if ((ph1Idx>-1)&&(ph2Idx>-1)) {
      Lvector1 = Lvector[ph1Idx];
@@ -310,7 +338,7 @@ RVec<int> FindMothersPdgId(RVec<int> id, RVec<int> idM) {
     return {motherId};
 }
 
-RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
+RVec<int> PickGENDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -340,8 +368,9 @@ RVec<int> PickBGDiphotonsLeading(RVec<float> pt, RVec<float> eta, RVec<float> ph
        ph1Idx = iph1;
      }
     }
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+     if ((iph2!=ph1Idx)&&(id[iph2]==IdUse)&&(idM[iph2]==idM[ph1Idx])) {
+//     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)&&(idM[iph2]==idM[ph1Idx])) {
 //     if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
@@ -405,8 +434,8 @@ float SmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<fl
        ph1Idx = iph1;
      }
     }
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if (pt[iph2]>pt2) {
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+     if ((iph2!=ph1Idx)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -422,7 +451,36 @@ float SmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<fl
     return Smass;
 }
 
-float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
+float SmassCalcLeadingOrdered(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    if (pt.size()>1) {
+       pt1 = pt[0];
+       ph1Idx = 0;
+       pt2 = pt[1];
+       ph2Idx = 1;
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return Smass;
+}
+
+
+float GENmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -447,14 +505,15 @@ float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
 
     for (int iph1 = 0; iph1 < pt.size(); iph1++) {
       if ((id[iph1]==IdUse)&&(motherId[iph1]==IdMUse)&&(pt[iph1]>pt1)) {
-//      if ((id[iph1]==IdUse)&&(pt[iph1]>pt1)) {
         pt1 = pt[iph1];
         ph1Idx = iph1;
       }
     }
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-      if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
-//      if ((id[iph2]==IdUse)&&(pt[iph2]>pt2)) {
+//std::cout << "IdUse, ph1Idx, pt1, idM[ph1Idx] " << IdUse << " ;" << ph1Idx << "; " << pt1 << " " << idM[ph1Idx] << std::endl;
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+//std::cout << "iph2, id[iph2], idM[iph2], (id[iph2]==IdUse), (idM[iph2]==idM[ph1Idx]) " << iph2 << " " << id[iph2] << " " <<  idM[iph2] << " " <<  (id[iph2]==IdUse) << " " << (idM[iph2]==idM[ph1Idx]) << std::endl;
+      if ((iph2!=ph1Idx)&&(id[iph2]==IdUse)&&(idM[iph2]==idM[ph1Idx])) {
+//      if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)&&(idM[iph2]==idM[ph1Idx])) {
         pt2 = pt[iph2];
         ph2Idx = iph2;
       }
@@ -467,6 +526,7 @@ float BGmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<f
      Smass = Lsum.M();
      dR = hardware::DeltaR(Lvector1,Lvector2);
     }
+//std::cout << "pt1, pt2, Smass " << pt1 << " " << ph1Idx << "; " << pt2 << " " << ph2Idx << " ;" << Smass << std::endl;
     return Smass;
 }
 
@@ -517,8 +577,8 @@ float dRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float
        ph1Idx = iph1;
      }
     }
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if (pt[iph2]>pt2) {
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+     if ((iph2!=ph1Idx)&&(pt[iph2]>pt2)) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -534,7 +594,36 @@ float dRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float
     return dR;
 }
 
-float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
+float dRCalcLeadingOrdered(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph1Idx = -1;
+    int ph2Idx = -1;
+    float Smass = -1.0;
+    float dR = -1.0;
+    float pt1 = -1.0;
+    float pt2 = -1.0;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1;
+    ROOT::Math::PtEtaPhiMVector Lvector2;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(pt,eta,phi,mass);
+    if (pt.size()>1) {
+       pt1 = pt[0];
+       ph1Idx = 0;
+       pt2 = pt[1];
+       ph2Idx = 1;
+    }
+    if ((ph1Idx>-1)&&(ph2Idx>-1)) {
+     Lvector1 = Lvector[ph1Idx];
+     Lsum.SetCoordinates(0,0,0,0);
+     Lvector2 = Lvector[ph2Idx];
+     Lsum = Lvector1+Lvector2;
+     Smass = Lsum.M();
+     dR = hardware::DeltaR(Lvector1,Lvector2);
+    }
+    return dR;
+}
+
+
+float GENdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<int> id, int IdUse, RVec<int> idM, int IdMUse) {
     int ph1Idx = -1;
     int ph2Idx = -1;
     float Smass = -1.0;
@@ -564,8 +653,9 @@ float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<flo
      }
     }
 
-    for (int iph2 = 1; ((iph2 < pt.size())&&(iph2!=ph1Idx)); iph2++) {
-     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)) {
+    for (int iph2 = 0; (iph2 < pt.size()); iph2++) {
+      if ((iph2!=ph1Idx)&&(id[iph2]==IdUse)&&(idM[iph2]==idM[ph1Idx])) {
+//     if ((id[iph2]==IdUse)&&(motherId[iph2]==IdMUse)&&(pt[iph2]>pt2)&&(idM[iph2]==idM[ph1Idx])) {
        pt2 = pt[iph2];
        ph2Idx = iph2;
      }
@@ -579,6 +669,102 @@ float BGdRCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<flo
      dR = hardware::DeltaR(Lvector1,Lvector2);
     }
     return dR;
+}
+
+RVec<float> PickLeadingLepton(int nElectron, int nMuon, RVec<float> Electron_pt, RVec<float> Muon_pt, RVec<float> Electron_eta, RVec<float> Muon_eta, RVec<float> Electron_phi, RVec<float> Muon_phi, RVec<float> Electron_mass, RVec<float> Muon_mass) { 
+    float lpt=-1.0;
+    float leta=-5.0;
+    float lphi=-5.0;
+    float lmass=-1.0;
+    if (nElectron+nMuon>0) {
+       if (nElectron>0) {
+         lpt = Electron_pt[0];
+         leta = Electron_eta[0];
+         lphi = Electron_phi[0];
+         lmass = Electron_mass[0];
+       }
+       if (nMuon>0) {
+         if (Muon_pt[0]>lpt) {
+             lpt = Muon_pt[0];
+             leta = Muon_eta[0];
+             lphi = Muon_phi[0];
+             lmass = Muon_mass[0];
+         }
+       }
+    }
+    return {lpt,leta,lphi,lmass};
+}
+
+RVec<float> PickLeadingQJets(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<float> Jet_phi, RVec<float> Jet_mass, RVec<float> Jet_hadronFlavour, int Flavour_Choice) {
+    float qpt0=-1.0;
+    float qpt1=-1.0;
+    float qeta0=-5.0;
+    float qeta1=-5.0;
+    float qphi0=-5.0;
+    float qphi1=-5.0;
+    float qmass0=-1.0;
+    float qmass1=-1.0;
+    int id0=-1;
+    int id1=-1;
+    for (int i = 0; i < Jet_pt.size(); i++) { 
+       if ((Jet_hadronFlavour[i]==Flavour_Choice)&&(Jet_pt[i]>qpt0)) {
+            qpt0=Jet_pt[i];
+            id0=i;
+       }
+    }
+    if (id0>=0) {
+       qeta0=Jet_eta[id0];
+       qphi0=Jet_phi[id0];
+       qmass0=Jet_mass[id0];
+       for (int j = 0; j < Jet_pt.size(); j++) {
+          if ((j!=id0)&&(Jet_hadronFlavour[j]==Flavour_Choice)&&(Jet_pt[j]>qpt1)) {
+               qpt1=Jet_pt[j];
+               id1=j;
+          }
+       }
+       if (id1>=0) {
+         qeta1=Jet_eta[id1];
+         qphi1=Jet_phi[id1];
+         qmass1=Jet_mass[id1];
+       }
+    }
+    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};  
+}
+
+RVec<float> PickLeadingDiJets(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<float> Jet_phi, RVec<float> Jet_mass, RVec<float> Jet_hadronFlavour, int Flavour_Choice) {
+    float qpt0=-1.0;
+    float qpt1=-1.0;
+    float qeta0=-5.0;
+    float qeta1=-5.0;
+    float qphi0=-5.0;
+    float qphi1=-5.0;
+    float qmass0=-1.0;
+    float qmass1=-1.0;
+    int id0=-1;
+    int id1=-1;
+    for (int i = 0; i < Jet_pt.size(); i++) {
+       if ((Jet_hadronFlavour[i]!=Flavour_Choice)&&(Jet_pt[i]>qpt0)) {
+            qpt0=Jet_pt[i];
+            id0=i;
+       }
+    }
+    if (id0>=0) {
+       qeta0=Jet_eta[id0];
+       qphi0=Jet_phi[id0];
+       qmass0=Jet_mass[id0];
+       for (int j = 0; j < Jet_pt.size(); j++) {
+          if ((j!=id0)&&(Jet_hadronFlavour[j]!=Flavour_Choice)&&(Jet_pt[j]>qpt1)) {
+               qpt1=Jet_pt[j];
+               id1=j;
+          }
+       }
+       if (id1>=0) {
+         qeta1=Jet_eta[id1];
+         qphi1=Jet_phi[id1];
+         qmass1=Jet_mass[id1];
+       }
+    }
+    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
 }
 
 std::vector<int> PickTop(RVec<float> mass, RVec<float> tagScore, RVec<int> idxs, std::pair<float,float> massCut, float scoreCut, bool invertScore=false) {

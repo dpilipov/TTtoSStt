@@ -223,15 +223,46 @@ class TTClass:
 	return self.a.GetActiveNode()
 #DP EDIT
     def analysis1(self):
-        self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('SidsAA_LNL','PickDiphotonsLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGidsAA_LNL','PickBGDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+#        self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+        self.a.Define('Apt0','Photon_pt[0]')
+        self.a.Define('Apt1','Photon_pt[1]')
+        self.a.Define('Aeta0','Photon_eta[0]')
+        self.a.Define('Aeta1','Photon_eta[1]')
+        self.a.Define('Aphi0','Photon_phi[0]')
+        self.a.Define('Aphi1','Photon_phi[1]')
+#        self.a.Define('SidsAA_LNL','PickDiphotonsLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+#        self.a.Define('GENidsAA_L','PickGENDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
         self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('SmassAA_LNL','SmassCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGmassAA_LNL','BGmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+        self.a.Define('SmassAA_LNL','SmassCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('GENmassAA_L','GENmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
         self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('dRAA_LNL','dRCalcLeading(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('BGdRAA_LNL','BGdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+        self.a.Define('dRAA_LNL','dRCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('GENdRAA_L','GENdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+        self.a.Define('lpt_vector','PickLeadingLepton(nElectron,nMuon,Electron_pt,Muon_pt,Electron_eta,Muon_eta,Electron_phi,Muon_phi,Electron_mass,Muon_mass)')
+        self.a.Define('lpt','lpt_vector[0]')
+        self.a.Define('leta','lpt_vector[1]')
+        self.a.Define('lphi','lpt_vector[2]')
+        self.a.Define('lmass','lpt_vector[3]')
+        self.a.Define('METpt','MET_pt')
+        self.a.Define('METphi','MET_phi')
+        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
+        self.a.Define('bpt0','bjet_vector[0]')
+        self.a.Define('bpt1','bjet_vector[1]')
+        self.a.Define('beta0','bjet_vector[2]')
+        self.a.Define('beta1','bjet_vector[3]')
+        self.a.Define('bphi0','bjet_vector[4]')
+        self.a.Define('bphi1','bjet_vector[5]')
+        self.a.Define('bmass0','bjet_vector[6]')
+        self.a.Define('bmass1','bjet_vector[7]')
+        self.a.Define('jet_vector','PickLeadingDiJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
+        self.a.Define('jpt0','jet_vector[0]')
+        self.a.Define('jpt1','jet_vector[1]')
+        self.a.Define('jeta0','jet_vector[2]')
+        self.a.Define('jeta1','jet_vector[3]')
+        self.a.Define('jphi0','jet_vector[4]')
+        self.a.Define('jphi1','jet_vector[5]')
+        self.a.Define('jmass0','jet_vector[6]')
+        self.a.Define('jmass1','jet_vector[7]')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
@@ -241,15 +272,18 @@ class TTClass:
         if node == None: node = self.a.GetActiveNode()
 
         columns = [
+            'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1', 'lpt', 'leta', 'lphi','lmass','METpt','METphi',
+            'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
+            'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
             'SmassAA', #DP EDIT
             'dRAA', #DP EDIT
-            'SidsAA', #DP EDIT
+#            'SidsAA', #DP EDIT
             'SmassAA_LNL', #DP EDIT
             'dRAA_LNL', #DP EDIT
-            'SidsAA_LNL', #DP EDIT
-            'BGmassAA_LNL', #DP EDIT
-            'BGdRAA_LNL', #DP EDIT
-            'BGidsAA_LNL', #DP EDIT
+#            'SidsAA_LNL', #DP EDIT
+            'GENmassAA_L', #DP EDIT
+            'GENdRAA_L', #DP EDIT
+#            'GENidsAA_L', #DP EDIT
 	    'FatJet_pt', # keep this so that we can calculate the HT 
             'Dijet_eta','Dijet_msoftdrop','Dijet_pt','Dijet_phi',
             'Dijet_deepTagMD_HbbvsQCD', 'Dijet_deepTagMD_ZHbbvsQCD',
