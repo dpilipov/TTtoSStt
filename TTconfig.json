@@ -34,11 +34,11 @@
 	"ZJetsHT400":145.3,
 	"ZJetsHT600":34.29,
 	"ZJetsHT800":18.57,
-	"StoAA":0.001
+	"StoAA":0.01
     },
     "CUTS":{
         "pt":15,
-        "eta":2.4,
+        "eta":3.0,
         "mh":[100,140],
         "mt":[105,210],
         "deepTagMD_HbbvsQCD": 0.96,

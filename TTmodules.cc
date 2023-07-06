@@ -20,7 +20,9 @@ bool TightMuVeto(int nMuon, RVec<bool> tightId, RVec<float> muonPt, RVec<float> 
     if (nMuon < 1) {return false;}	// don't veto event, there are no muons
     bool veto = false;
     for (int iMu = 0; iMu < muonPt.size(); iMu++) {
-	veto = (tightId[iMu] == 1) && (muonPt[iMu] > 30.) && (muonRelIso[iMu] < 0.15) && (std::abs(muonEta[iMu]) < 2.4); // veto if meets SL selection criteria
+//DP EDIT
+//	veto = (tightId[iMu] == 1) && (muonPt[iMu] > 30.) && (muonRelIso[iMu] < 0.15) && (std::abs(muonEta[iMu]) < 2.4); // veto if meets SL selection criteria
+      veto = (tightId[iMu] == 1) && (muonPt[iMu] > 15.) && (muonRelIso[iMu] < 0.15) && (std::abs(muonEta[iMu]) < 3.0); 
 	if (veto) {return veto;}
     }
     return veto;
@@ -30,7 +32,9 @@ bool TightElVeto(int nElectron, RVec<bool> elIso, RVec<float> elPt, RVec<float> 
     if (nElectron < 1) {return false;}
     bool veto = false;
     for (int iEl = 0; iEl < elPt.size(); iEl++){
-	veto = (elIso[iEl] == 1) && (elPt[iEl] > 35.) && (std::abs(elEta[iEl])<2.5);
+//DP EDIT
+//	veto = (elIso[iEl] == 1) && (elPt[iEl] > 35.) && (std::abs(elEta[iEl])<2.5);
+      veto = (elIso[iEl] == 1) && (elPt[iEl] > 15.) && (std::abs(elEta[iEl])<3.0);
 	if (veto) {return veto;}
     }
     return veto;
@@ -40,7 +44,9 @@ bool GoodMuVeto(int nMuon, RVec<float> muonPt, RVec<bool> looseId, RVec<float> d
     if (nMuon < 1) {return false;}
     bool veto = false;
     for (int iMu = 0; iMu < muonPt.size(); iMu++) {
-	veto = (muonPt[iMu] > 30.) && (looseId[iMu] == 1) && (std::abs(dxy[iMu]) < 0.02) && (std::abs(muonEta[iMu]) < 2.4);
+// DP EDIT
+//	veto = (muonPt[iMu] > 30.) && (looseId[iMu] == 1) && (std::abs(dxy[iMu]) < 0.02) && (std::abs(muonEta[iMu]) < 2.4);
+      veto = (muonPt[iMu] > 15.) && (looseId[iMu] == 1) && (std::abs(dxy[iMu]) < 0.02) && (std::abs(muonEta[iMu]) < 3.0);
 	if (veto) {return veto;} 
     }
     return veto;
@@ -50,7 +56,9 @@ bool GoodElVeto(int nElectron, RVec<float> elPt, RVec<bool> elIso, RVec<float> d
     if (nElectron < 1) {return false;}
     bool veto =false;
     for (int iEl = 0; iEl < elPt.size(); iEl++) {
-	veto = (elPt[iEl] > 35.) && (elIso[iEl] == 1) && (std::abs(dxy[iEl]) < 0.05) && (std::abs(elEta[iEl]) < 2.5);
+// DP EDIT
+//	veto = (elPt[iEl] > 35.) && (elIso[iEl] == 1) && (std::abs(dxy[iEl]) < 0.05) && (std::abs(elEta[iEl]) < 2.5);
+      veto = (elPt[iEl] > 15.0) && (elIso[iEl] == 1) && (std::abs(dxy[iEl]) < 0.05) && (std::abs(elEta[iEl]) < 3.0);
 	if (veto) {return veto;}
     }
     return veto;
@@ -86,7 +94,9 @@ float getSF(int jetCat, float pt, std::string _year, int _var) {
     float SF;
     int ptCat;
     // get the pT category
+// DP EDIT - the commented out line...
     if ((pt >= 300) && (pt < 400))       { ptCat = 0; }
+//    if ((pt >= 15) && (pt < 400))       { ptCat = 0; }
     else if ((pt >= 400) && (pt < 480))  { ptCat = 1; }
     else if ((pt >= 480) && (pt < 600))  { ptCat = 2; }
     else if ((pt >= 600) && (pt < 1200)) { ptCat = 3; }
@@ -221,7 +231,9 @@ RVec<int> PickDijets(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<floa
     int jet1Idx = -1;
     for (int ijet = 0; ijet < pt.size(); ijet++) {
         if (jet1Idx == -1) {
-            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+// DP EDIT
+//            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+            if (pt[ijet] > 15 && std::abs(eta[ijet]) < 3.0 && mass[ijet] > 0) {
                 if (jet0Idx == -1) {
                     jet0Idx = ijet;
                 } else {
@@ -767,6 +779,94 @@ RVec<float> PickLeadingDiJets(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<floa
     return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
 }
 
+RVec<float> PickLeadingDiJetsDR(RVec<float> bjet_vec, float dRselection, RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<float> Jet_phi, RVec<float> Jet_mass, RVec<float> Jet_hadronFlavour, int Flavour_Choice) {
+    float qpt0=-1.0;
+    float qpt1=-1.0;
+    float qeta0=-5.0;
+    float qeta1=-5.0;
+    float qphi0=-5.0;
+    float qphi1=-5.0;
+    float qmass0=-1.0;
+    float qmass1=-1.0;
+    int id0=-1;
+    int id1=-1;
+    float b1pt=bjet_vec[0];
+    float b2pt=bjet_vec[1];
+    float b1eta=bjet_vec[2];
+    float b2eta=bjet_vec[3];
+    float b1phi=bjet_vec[4];
+    float b2phi=bjet_vec[5];
+    float b1mass=bjet_vec[6];
+    float b2mass=bjet_vec[7];
+    RVec<float> dR1=Jet_pt;
+    RVec<float> dR2=Jet_pt;
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1=hardware::TLvector(b1pt,b1eta,b1phi,b1mass);
+    ROOT::Math::PtEtaPhiMVector Lvector2=hardware::TLvector(b2pt,b2eta,b2phi,b2mass);;
+    RVec<ROOT::Math::PtEtaPhiMVector> Lvector=hardware::TLvector(Jet_pt,Jet_eta,Jet_phi,Jet_mass);
+    for (int i = 0; i < Jet_pt.size(); i++) {
+      dR1[i]=hardware::DeltaR(Lvector[i],Lvector1);
+      dR2[i]=hardware::DeltaR(Lvector[i],Lvector2);
+    }
+    for (int i = 0; i < Jet_pt.size(); i++) {
+     if ((dR1[i]>dRselection)&&(dR2[i]>dRselection)) {
+       if ((Jet_hadronFlavour[i]!=Flavour_Choice)&&(Jet_pt[i]>qpt0)) {
+            qpt0=Jet_pt[i];
+            id0=i;
+       }
+     }
+    }
+    if (id0>=0) {
+       qeta0=Jet_eta[id0];
+       qphi0=Jet_phi[id0];
+       qmass0=Jet_mass[id0];
+       for (int j = 0; j < Jet_pt.size(); j++) {
+         if ((dR1[j]>dRselection)&&(dR2[j]>dRselection)) {
+          if ((j!=id0)&&(Jet_hadronFlavour[j]!=Flavour_Choice)&&(Jet_pt[j]>qpt1)) {
+               qpt1=Jet_pt[j];
+               id1=j;
+          }
+         }
+       }
+       if (id1>=0) {
+         qeta1=Jet_eta[id1];
+         qphi1=Jet_phi[id1];
+         qmass1=Jet_mass[id1];
+       }
+    }
+//if ((id0>=0)&&(id1>=0)) {
+//std::cout << "final dijet choice " << id0 << " dR1 " << dR1[id0] << " " << id1 << " dR1 " << dR2[id1]  << std::endl;
+//} else {
+//std::cout << "nothing found"<< std::endl;
+//}
+
+    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
+}
+
+RVec<float> PickLeadingDiPhotons(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<float> Jet_phi, RVec<float> Jet_mass) {
+    float qpt0=-1.0;
+    float qpt1=-1.0;
+    float qeta0=-5.0;
+    float qeta1=-5.0;
+    float qphi0=-5.0;
+    float qphi1=-5.0;
+    float qmass0=-1.0;
+    float qmass1=-1.0;
+    if (Jet_pt.size()>0) {
+       qpt0=Jet_pt[0];
+       qeta0=Jet_eta[0];
+       qphi0=Jet_phi[0];
+       qmass0=Jet_mass[0];
+       if (Jet_pt.size()>1) {
+         qpt1=Jet_pt[1];
+         qeta1=Jet_eta[1];
+         qphi1=Jet_phi[1];
+         qmass1=Jet_mass[1];
+       }
+    }
+    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
+}
+
 std::vector<int> PickTop(RVec<float> mass, RVec<float> tagScore, RVec<int> idxs, std::pair<float,float> massCut, float scoreCut, bool invertScore=false) {
     if (idxs.size()>2) {
         std::cout << "PickTop -- WARNING: You have input more than two indices. Only two accepted. Assuming first two indices.";
@@ -887,7 +987,9 @@ RVec<int> PickJetAnd2Gamma(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVe
     int phoIdx1 = -1;
     int phoIdx2 = -1;
     for (int ijet=0; ijet < pt.size(); ijet++) {
-        if (pt[ijet] > 200 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+// DP EDIT
+//        if (pt[ijet] > 200 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+        if (pt[ijet] > 15 && std::abs(eta[ijet]) < 3.0 && mass[ijet] > 0) {
             jetIdx = ijet;
             break;      // we've found one candidate jet
         }

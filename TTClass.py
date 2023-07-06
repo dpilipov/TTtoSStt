@@ -224,12 +224,15 @@ class TTClass:
 #DP EDIT
     def analysis1(self):
 #        self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('Apt0','Photon_pt[0]')
-        self.a.Define('Apt1','Photon_pt[1]')
-        self.a.Define('Aeta0','Photon_eta[0]')
-        self.a.Define('Aeta1','Photon_eta[1]')
-        self.a.Define('Aphi0','Photon_phi[0]')
-        self.a.Define('Aphi1','Photon_phi[1]')
+        self.a.Define('AA_vector','PickLeadingDiPhotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('Apt0','AA_vector[0]')
+        self.a.Define('Apt1','AA_vector[1]')
+        self.a.Define('Aeta0','AA_vector[2]')
+        self.a.Define('Aeta1','AA_vector[3]')
+        self.a.Define('Aphi0','AA_vector[4]')
+        self.a.Define('Aphi1','AA_vector[5]')
+        self.a.Define('Amass0','AA_vector[6]')
+        self.a.Define('Amass1','AA_vector[7]')
 #        self.a.Define('SidsAA_LNL','PickDiphotonsLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
 #        self.a.Define('GENidsAA_L','PickGENDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
         self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
@@ -245,7 +248,9 @@ class TTClass:
         self.a.Define('lmass','lpt_vector[3]')
         self.a.Define('METpt','MET_pt')
         self.a.Define('METphi','MET_phi')
-        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
+#  USE THE NEXT LINE FOR HADRONIC+LEPTONIC, and the LINE BELOW FOR ALL HADRONIC
+#        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
+        self.a.Define('bjet_vector','PickLeadingQJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
         self.a.Define('bpt0','bjet_vector[0]')
         self.a.Define('bpt1','bjet_vector[1]')
         self.a.Define('beta0','bjet_vector[2]')
@@ -254,7 +259,9 @@ class TTClass:
         self.a.Define('bphi1','bjet_vector[5]')
         self.a.Define('bmass0','bjet_vector[6]')
         self.a.Define('bmass1','bjet_vector[7]')
-        self.a.Define('jet_vector','PickLeadingDiJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
+# USE THE NEXT LINE FOR ALL HADRONIC, and the LINE BELOW for HADRONIC+LEPTONIC
+        self.a.Define('jet_vector','PickLeadingDiJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
+#        self.a.Define('jet_vector','PickLeadingDiJetsDR(bjet_vector,1.2,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
         self.a.Define('jpt0','jet_vector[0]')
         self.a.Define('jpt1','jet_vector[1]')
         self.a.Define('jeta0','jet_vector[2]')
@@ -272,7 +279,8 @@ class TTClass:
         if node == None: node = self.a.GetActiveNode()
 
         columns = [
-            'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1', 'lpt', 'leta', 'lphi','lmass','METpt','METphi',
+            'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1','Amass0','Amass1',
+            'lpt', 'leta', 'lphi','lmass','METpt','METphi',
             'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
             'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
             'SmassAA', #DP EDIT
@@ -311,6 +319,7 @@ class TTClass:
                 columns.append('HEM_drop__nom')
             if 'ttbar' in self.setname:
                 columns.extend(['TptReweight__nom','TptReweight__up','TptReweight__down'])
+
 
 	if (len(colNames) > 0):
 	    columns.extend(colNames)
