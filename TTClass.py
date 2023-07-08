@@ -64,6 +64,31 @@ class TTClass:
 	print('Adding cutflow information...\n\t{}\t{}'.format(varName, var))
 	self.a.Define('{}'.format(varName),str(var))
 	
+# DP EDIT  added Yifan's code here, edited for two AK8 jets
+    def Preselection(self):
+# DP EDIT
+#        self.a.Cut('nFatJet','nFatJet > 0')# at least 1 AK8 jet
+#        self.a.Cut('nJet','nJet > 0') # at least 1 AK4 jet
+#        self.a.Cut('nLepton','nElectron > 0 || nMuon > 0') #make sure at least one lepton exist. Save some effort in c++ code        
+        self.a.Cut('nFatJet','nFatJet > 1')# at least 2 AK8 jets
+        self.a.Define('DijetIds','PickDijetsV2(FatJet_phi,Jet_phi,Electron_pt,Muon_pt,Jet_btagCSVV2)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
+#        self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1 && DijetIds[2] > -1') #Cut the data according to our standard (FatJet, Jet, Lepton condtion respectively)
+#        self.a.Define('bJetFromJets','DijetIds[1]')#take a look at which jet is being selected as the bjet
+        self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1') #Cut the data according to 2 AK8 jets
+        return self.a.GetActiveNode()
+
+    #now we define the selection according to the following standard: 2 top tagging AK8; DP EDIT and not the following.... , and a 2D cut on lepton+b
+    def Selection(self,Ttagparam):
+        self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[0]] > {}'.format(Ttagparam))
+        self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[1]] > {}'.format(Ttagparam))
+
+#        self.a.ObjectFromCollection('bJet','Jet','DijetIds[1]')#isolate the b jet for 2D cut analysis purposes
+#        self.a.Define('Pick2DCut','TwoDCutV2(DijetIds[2],DijetIds[4],DijetIds[5],Electron_pt,Muon_pt,bJet_pt,Electron_phi,Muon_phi,bJet_phi,Electron_eta,Muon_eta,bJet_eta)')
+        self.a.Cut('2DCut','Pick2DCut[0] == 1 || Pick2DCut[1] == 1')#if either condition is met, we keep the event.
+        return self.a.GetActiveNode()
+
+
+
 
     def getNweighted(self):
 	if not self.a.isData:
@@ -270,6 +295,8 @@ class TTClass:
         self.a.Define('jphi1','jet_vector[5]')
         self.a.Define('jmass0','jet_vector[6]')
         self.a.Define('jmass1','jet_vector[7]')
+        self.a.Define('jetIdsDP','PickDijetsV3(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('TPmass_LNL','TPmassCalcLeading(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass)')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
@@ -283,7 +310,7 @@ class TTClass:
             'lpt', 'leta', 'lphi','lmass','METpt','METphi',
             'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
             'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
-            'SmassAA', #DP EDIT
+            'SmassAA', 'TPmass_LNL',#DP EDIT
             'dRAA', #DP EDIT
 #            'SidsAA', #DP EDIT
             'SmassAA_LNL', #DP EDIT

@@ -233,17 +233,43 @@ RVec<int> PickDijets(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<floa
         if (jet1Idx == -1) {
 // DP EDIT
 //            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
-            if (pt[ijet] > 15 && std::abs(eta[ijet]) < 3.0 && mass[ijet] > 0) {
+            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4) {
                 if (jet0Idx == -1) {
                     jet0Idx = ijet;
                 } else {
-                    if (abs(hardware::DeltaPhi(phi[jet0Idx], phi[ijet])) > M_PI/2) {
+//DP EDIT
+//                    if (abs(hardware::DeltaPhi(phi[jet0Idx], phi[ijet])) > M_PI/2) {
+                    if (std::abs(eta[jet0Idx]-eta[ijet]) < 1.6) {
                         jet1Idx = ijet;
                         break;
                     }
                 }
             }
         }       
+    }
+    return {jet0Idx,jet1Idx};
+}
+
+RVec<int> PickDijetsV3(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<float> Jet_btagCMVA) {
+    int jet0Idx = -1;
+    int jet1Idx = -1;
+    for (int ijet = 0; ijet < pt.size(); ijet++) {
+        if (jet1Idx == -1) {
+// DP EDIT
+//            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && Jet_btagCMVA[ijet] > 0.8) {
+                if (jet0Idx == -1) {
+                    jet0Idx = ijet;
+                } else {
+//DP EDIT
+////                    if (abs(hardware::DeltaPhi(phi[jet0Idx], phi[ijet])) > M_PI/2) {
+                    if (std::abs(eta[jet0Idx]-eta[ijet]) < 1.6 && Jet_btagCMVA[ijet] > 0.8) {
+                        jet1Idx = ijet;
+                        break;
+                    }
+                }
+            }
+        }
     }
     return {jet0Idx,jet1Idx};
 }
@@ -427,6 +453,21 @@ float SmassCalc(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> ma
      }
     }
     return Smass;
+}
+
+float TPmassCalcLeading(RVec<float> AA_vector, RVec<int> FJids, RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    ROOT::Math::PtEtaPhiMVector Lsum;
+    ROOT::Math::PtEtaPhiMVector Lvector1=hardware::TLvector(AA_vector[0],AA_vector[2],AA_vector[4],AA_vector[6]);
+    ROOT::Math::PtEtaPhiMVector Lvector2=hardware::TLvector(AA_vector[1],AA_vector[3],AA_vector[5],AA_vector[7]);
+    ROOT::Math::PtEtaPhiMVector Lvector3;
+    float TPmass=-1.0;
+    if (FJids[0]>-1) {
+       Lvector3=hardware::TLvector(pt[FJids[0]],eta[FJids[0]],phi[FJids[0]],mass[FJids[0]]);
+       Lsum.SetCoordinates(0,0,0,0);
+       Lsum = Lvector1+Lvector2+Lvector3;
+       TPmass = Lsum.M();
+    }
+    return TPmass;
 }
 
 float SmassCalcLeading(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
@@ -908,6 +949,49 @@ std::vector<int> PickTop(RVec<float> mass, RVec<float> tagScore, RVec<int> idxs,
     }
     return out;
 }
+
+std::vector<int> PickTop_Simple(RVec<float> tagScore, RVec<int> idxs, float scoreCut, bool invertScore=false) {
+    if (idxs.size()>2) {
+        std::cout << "PickTop -- WARNING: You have input more than two indices. Only two accepted. Assuming first two indices.";
+    }
+    std::vector<int> out(2);
+    float WP = scoreCut;
+
+    int idx0 = idxs[0];
+    int idx1 = idxs[1];
+    bool isTop0, isTop1;
+    if (!invertScore) {
+//        isTop0 = (mass[idx0] > massCut.first) && (mass[idx0] < massCut.second) && (tagScore[idx0] > WP);
+//        isTop1 = (mass[idx1] > massCut.first) && (mass[idx1] < massCut.second) && (tagScore[idx1] > WP);
+        isTop0 = (tagScore[idx0] > WP);
+        isTop1 = (tagScore[idx1] > WP);
+    } else {
+        // if inverted, only accept jets meeting the loose score (>0.2) and not those meeting the tight cut (< WP)
+        isTop0 = (tagScore[idx0] < WP) && (0.2 < tagScore[idx0]);
+        isTop1 = (tagScore[idx1] < WP) && (0.2 < tagScore[idx1]);
+    }
+
+    if (isTop0 && isTop1) {
+        if (tagScore[idx0] > tagScore[idx1]) {
+            out[0] = idx0;
+            out[1] = idx1;
+        } else {
+            out[0] = idx1;
+            out[1] = idx0;
+        }
+    } else if (isTop0) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop1) {
+        out[0] = idx1;
+        out[1] = idx0;
+    } else {
+        out[0] = -1;
+        out[1] = -1;
+    }
+    return out;
+}
+
 
 std::vector<int> PickTopCRv2(RVec<float> mass, RVec<float> tagScore, RVec<float> HiggsScore, RVec<int> idxs, std::pair<float,float> massCut, float scoreCut, bool invertScore=false) {
     if (idxs.size() > 2) {

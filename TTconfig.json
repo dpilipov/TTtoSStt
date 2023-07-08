@@ -37,13 +37,13 @@
 	"StoAA":0.01
     },
     "CUTS":{
-        "pt":15,
-        "eta":3.0,
+        "pt":350,
+        "eta":2.4,
         "mh":[100,140],
         "mt":[105,210],
-        "deepTagMD_HbbvsQCD": 0.96,
-        "particleNetMD_HbbvsQCD": 0.98,
-        "deepTag_TvsQCD": 0.92,
-        "particleNet_TvsQCD": 0.94
+        "deepTagMD_HbbvsQCD": 0.8,
+        "particleNetMD_HbbvsQCD": 0.8,
+        "deepTag_TvsQCD": 0.8,
+        "particleNet_TvsQCD": 0.8
     }
 }
