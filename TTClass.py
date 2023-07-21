@@ -275,27 +275,39 @@ class TTClass:
         self.a.Define('METphi','MET_phi')
 #  USE THE NEXT LINE FOR HADRONIC+LEPTONIC, and the LINE BELOW FOR ALL HADRONIC
 #        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
-        self.a.Define('bjet_vector','PickLeadingQJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
-        self.a.Define('bpt0','bjet_vector[0]')
-        self.a.Define('bpt1','bjet_vector[1]')
-        self.a.Define('beta0','bjet_vector[2]')
-        self.a.Define('beta1','bjet_vector[3]')
-        self.a.Define('bphi0','bjet_vector[4]')
-        self.a.Define('bphi1','bjet_vector[5]')
-        self.a.Define('bmass0','bjet_vector[6]')
-        self.a.Define('bmass1','bjet_vector[7]')
+#        self.a.Define('bjet_vector','PickLeadingQJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
+#        self.a.Define('bpt0','bjet_vector[0]')
+#        self.a.Define('bpt1','bjet_vector[1]')
+#        self.a.Define('beta0','bjet_vector[2]')
+#        self.a.Define('beta1','bjet_vector[3]')
+#        self.a.Define('bphi0','bjet_vector[4]')
+#        self.a.Define('bphi1','bjet_vector[5]')
+#        self.a.Define('bmass0','bjet_vector[6]')
+#        self.a.Define('bmass1','bjet_vector[7]')
 # USE THE NEXT LINE FOR ALL HADRONIC, and the LINE BELOW for HADRONIC+LEPTONIC
-        self.a.Define('jet_vector','PickLeadingDiJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
+#        self.a.Define('jet_vector','PickLeadingDiJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
 #        self.a.Define('jet_vector','PickLeadingDiJetsDR(bjet_vector,1.2,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
-        self.a.Define('jpt0','jet_vector[0]')
-        self.a.Define('jpt1','jet_vector[1]')
-        self.a.Define('jeta0','jet_vector[2]')
-        self.a.Define('jeta1','jet_vector[3]')
-        self.a.Define('jphi0','jet_vector[4]')
-        self.a.Define('jphi1','jet_vector[5]')
-        self.a.Define('jmass0','jet_vector[6]')
-        self.a.Define('jmass1','jet_vector[7]')
+#        self.a.Define('jpt0','jet_vector[0]')
+#        self.a.Define('jpt1','jet_vector[1]')
+#        self.a.Define('jeta0','jet_vector[2]')
+#        self.a.Define('jeta1','jet_vector[3]')
+#        self.a.Define('jphi0','jet_vector[4]')
+#        self.a.Define('jphi1','jet_vector[5]')
+#        self.a.Define('jmass0','jet_vector[6]')
+#        self.a.Define('jmass1','jet_vector[7]')
         self.a.Define('jetIdsDP','PickDijetsV3(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('jetALL_vector','PickDijetsV3_ALL(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('jetRegion','jetALL_vector[0]')
+        self.a.Define('jptALL0','jetALL_vector[1]')
+        self.a.Define('jptALL1','jetALL_vector[2]')
+        self.a.Define('jetaALL0','jetALL_vector[3]')
+        self.a.Define('jetaALL1','jetALL_vector[4]')
+        self.a.Define('jphiALL0','jetALL_vector[5]')
+        self.a.Define('jphiALL1','jetALL_vector[6]')
+        self.a.Define('jmassALL0','jetALL_vector[7]')
+        self.a.Define('jmassALL1','jetALL_vector[8]')
+        self.a.Define('jTvsQCDALL0','jetALL_vector[9]')
+        self.a.Define('jTvsQCDALL1','jetALL_vector[10]')
         self.a.Define('TPmass_LNL','TPmassCalcLeading(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass)')
 
     def Snapshot(self,node=None, colNames=[]):
@@ -308,8 +320,10 @@ class TTClass:
         columns = [
             'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1','Amass0','Amass1',
             'lpt', 'leta', 'lphi','lmass','METpt','METphi',
-            'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
-            'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
+#            'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
+#            'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
+            'jetRegion',
+            'jptALL0','jptALL1','jetaALL0','jetaALL1','jphiALL0','jphiALL1','jmassALL0','jmassALL1','jTvsQCDALL0','jTvsQCDALL1',
             'SmassAA', 'TPmass_LNL',#DP EDIT
             'dRAA', #DP EDIT
 #            'SidsAA', #DP EDIT

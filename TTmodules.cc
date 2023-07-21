@@ -274,6 +274,64 @@ RVec<int> PickDijetsV3(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<fl
     return {jet0Idx,jet1Idx};
 }
 
+RVec<float> PickDijetsV3_ALL(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<float> Jet_btagCMVA) {
+    int jet0Idx = -1;
+    int jet1Idx = -1;
+    float pt0 = -1.0;
+    float pt1 = -1.0;
+    float eta0 = -1.0;
+    float eta1 = -1.0;
+    float phi0 = -1.0;
+    float phi1 = -1.0;
+    float mass0 = -1.0;
+    float mass1 = -1.0;
+    float tag0 = -1.0;
+    float tag1 = -1.0;
+    float IdReg = -1.0; //DP: 0 for CR, 1 for SR
+    for (int ijet = 0; ijet < pt.size(); ijet++) {
+        if (jet1Idx == -1) {
+// DP EDIT FIRST WORK ON SR:
+//            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && mass[ijet] > 50) {
+            if (pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && Jet_btagCMVA[ijet] > 0.8) {
+                if (jet0Idx == -1) {
+                    jet0Idx = ijet;
+                } else {
+//DP EDIT
+//////                    if (abs(hardware::DeltaPhi(phi[jet0Idx], phi[ijet])) > M_PI/2) {
+                    if (std::abs(eta[jet0Idx]-eta[ijet]) < 1.6 && Jet_btagCMVA[ijet] > 0.8) {
+                        jet1Idx = ijet;
+                        IdReg = 1.0;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+// DP EDIT NOW WORK ON CR:
+    if (jet1Idx == -1 && jet0Idx > -1) {
+         for (int ijet = 0; ijet < pt.size(); ijet++) {
+            if (ijet != jet0Idx && jet1Idx == -1 && pt[ijet] > 350 && std::abs(eta[ijet]) < 2.4 && Jet_btagCMVA[ijet] > 0.2 && Jet_btagCMVA[ijet] < 0.8 && std::abs(eta[jet0Idx]-eta[ijet]) < 1.6) {
+                 jet1Idx = ijet;
+                 IdReg = 0.0;
+                 break;
+            }
+        }
+    }
+    if (IdReg > -1) {
+        pt0 = pt[jet0Idx];
+        eta0 = eta[jet0Idx];
+        phi0 = phi[jet0Idx];
+        mass0 = mass[jet0Idx];
+        tag0 = Jet_btagCMVA[jet0Idx];
+        pt1 = pt[jet1Idx];
+        eta1 = eta[jet1Idx];
+        phi1 = phi[jet1Idx];
+        mass1 = mass[jet1Idx];
+        tag1 = Jet_btagCMVA[jet1Idx];
+    }
+    return {IdReg, pt0,pt1,eta0,eta1,phi0,phi1,mass0,mass1,tag0,tag1};
+}
+
 RVec<int> PickDiphotons(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, float SmassTarget) {
     int ph0Idx = -1;
     int ph1Idx = -1;
@@ -461,7 +519,7 @@ float TPmassCalcLeading(RVec<float> AA_vector, RVec<int> FJids, RVec<float> pt, 
     ROOT::Math::PtEtaPhiMVector Lvector2=hardware::TLvector(AA_vector[1],AA_vector[3],AA_vector[5],AA_vector[7]);
     ROOT::Math::PtEtaPhiMVector Lvector3;
     float TPmass=-1.0;
-    if (FJids[0]>-1) {
+    if ((FJids[0]>-1)&&(AA_vector[0]>0.0)&&(AA_vector[1]>0.0)) {
        Lvector3=hardware::TLvector(pt[FJids[0]],eta[FJids[0]],phi[FJids[0]],mass[FJids[0]]);
        Lsum.SetCoordinates(0,0,0,0);
        Lsum = Lvector1+Lvector2+Lvector3;
