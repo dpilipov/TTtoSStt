@@ -41,9 +41,9 @@
         "eta":2.4,
         "mh":[100,140],
         "mt":[105,210],
-        "deepTagMD_HbbvsQCD": 0.8,
-        "particleNetMD_HbbvsQCD": 0.8,
-        "deepTag_TvsQCD": 0.8,
-        "particleNet_TvsQCD": 0.8
+        "deepTagMD_HbbvsQCD": 0.05,
+        "particleNetMD_HbbvsQCD": 0.05,
+        "deepTag_TvsQCD": 0.05,
+        "particleNet_TvsQCD": 0.05
     }
 }

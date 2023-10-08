@@ -71,7 +71,9 @@ class TTClass:
 #        self.a.Cut('nJet','nJet > 0') # at least 1 AK4 jet
 #        self.a.Cut('nLepton','nElectron > 0 || nMuon > 0') #make sure at least one lepton exist. Save some effort in c++ code        
         self.a.Cut('nFatJet','nFatJet > 1')# at least 2 AK8 jets
-        self.a.Define('DijetIds','PickDijetsV2(FatJet_phi,Jet_phi,Electron_pt,Muon_pt,Jet_btagCSVV2)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
+        self.a.Cut('nPhoton','nPhoton > 1')# at least 2 photon
+#        self.a.Define('DijetIds','PickDijetsV2(FatJet_phi,Jet_phi,Electron_pt,Muon_pt,Jet_btagCSVV2)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
+        self.a.Define('DijetIds','PickDijets(FatJet_phi,FatJet_eta,FatJet_phi,FatJet_msoftdrop)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
 #        self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1 && DijetIds[2] > -1') #Cut the data according to our standard (FatJet, Jet, Lepton condtion respectively)
 #        self.a.Define('bJetFromJets','DijetIds[1]')#take a look at which jet is being selected as the bjet
         self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1') #Cut the data according to 2 AK8 jets
@@ -125,6 +127,11 @@ class TTClass:
         self.a.Cut('njets','nFatJet >= 2')
 	self.NJETS = self.getNweighted()
 	self.AddCutflowColumn(self.NJETS, "NJETS")
+
+#DP EDIT ADD 2 photon Preselection
+        self.a.Cut('nphotons','nPhoton >= 2')
+        self.NPHOTONS = self.getNweighted()
+        self.AddCutflowColumn(self.NPHOTONS, "NPHOTONS")
 
         # jetId cut: https://cms-pub-talk.web.cern.ch/t/jme-or/6547
         # INFO: https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID#nanoAOD_Flags
@@ -260,19 +267,19 @@ class TTClass:
         self.a.Define('Amass1','AA_vector[7]')
 #        self.a.Define('SidsAA_LNL','PickDiphotonsLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
 #        self.a.Define('GENidsAA_L','PickGENDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-        self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+#        self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
         self.a.Define('SmassAA_LNL','SmassCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('GENmassAA_L','GENmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-        self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
+#        self.a.Define('GENmassAA_L','GENmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+#        self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
         self.a.Define('dRAA_LNL','dRCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-        self.a.Define('GENdRAA_L','GENdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-        self.a.Define('lpt_vector','PickLeadingLepton(nElectron,nMuon,Electron_pt,Muon_pt,Electron_eta,Muon_eta,Electron_phi,Muon_phi,Electron_mass,Muon_mass)')
-        self.a.Define('lpt','lpt_vector[0]')
-        self.a.Define('leta','lpt_vector[1]')
-        self.a.Define('lphi','lpt_vector[2]')
-        self.a.Define('lmass','lpt_vector[3]')
-        self.a.Define('METpt','MET_pt')
-        self.a.Define('METphi','MET_phi')
+#        self.a.Define('GENdRAA_L','GENdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
+#        self.a.Define('lpt_vector','PickLeadingLepton(nElectron,nMuon,Electron_pt,Muon_pt,Electron_eta,Muon_eta,Electron_phi,Muon_phi,Electron_mass,Muon_mass)')
+#        self.a.Define('lpt','lpt_vector[0]')
+#        self.a.Define('leta','lpt_vector[1]')
+#        self.a.Define('lphi','lpt_vector[2]')
+#        self.a.Define('lmass','lpt_vector[3]')
+#        self.a.Define('METpt','MET_pt')
+#        self.a.Define('METphi','MET_phi')
 #  USE THE NEXT LINE FOR HADRONIC+LEPTONIC, and the LINE BELOW FOR ALL HADRONIC
 #        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
 #        self.a.Define('bjet_vector','PickLeadingQJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
@@ -295,8 +302,11 @@ class TTClass:
 #        self.a.Define('jphi1','jet_vector[5]')
 #        self.a.Define('jmass0','jet_vector[6]')
 #        self.a.Define('jmass1','jet_vector[7]')
-        self.a.Define('jetIdsDP','PickDijetsV3(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
-        self.a.Define('jetALL_vector','PickDijetsV3_ALL(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+#DP EDIT: Go back to the more general selection for dijets - not including TvsQCD - and leave the SR/CR selection for selection step!!!!
+#        self.a.Define('jetIdsDP','PickDijetsV3(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+#        self.a.Define('jetALL_vector','PickDijetsV3_ALL(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('jetIdsDP','PickDijets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop)')
+        self.a.Define('jetALL_vector','PickDijetsV(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop,FatJet_particleNet_TvsQCD)')
         self.a.Define('jetRegion','jetALL_vector[0]')
         self.a.Define('jptALL0','jetALL_vector[1]')
         self.a.Define('jptALL1','jetALL_vector[2]')
@@ -309,6 +319,8 @@ class TTClass:
         self.a.Define('jTvsQCDALL0','jetALL_vector[9]')
         self.a.Define('jTvsQCDALL1','jetALL_vector[10]')
         self.a.Define('TPmass_LNL','TPmassCalcLeading(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass)')
+        self.a.Define('TPmass_80','TPmassCalcLeading80(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('TPmass_70','TPmassCalcLeading70(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
@@ -319,19 +331,20 @@ class TTClass:
 
         columns = [
             'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1','Amass0','Amass1',
-            'lpt', 'leta', 'lphi','lmass','METpt','METphi',
+#            'lpt', 'leta', 'lphi','lmass','METpt','METphi',
 #            'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
 #            'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
             'jetRegion',
             'jptALL0','jptALL1','jetaALL0','jetaALL1','jphiALL0','jphiALL1','jmassALL0','jmassALL1','jTvsQCDALL0','jTvsQCDALL1',
-            'SmassAA', 'TPmass_LNL',#DP EDIT
-            'dRAA', #DP EDIT
+#            'SmassAA', 
+            'TPmass_LNL','TPmass_80','TPmass_70',#DP EDIT
+#            'dRAA', #DP EDIT
 #            'SidsAA', #DP EDIT
             'SmassAA_LNL', #DP EDIT
             'dRAA_LNL', #DP EDIT
 #            'SidsAA_LNL', #DP EDIT
-            'GENmassAA_L', #DP EDIT
-            'GENdRAA_L', #DP EDIT
+#            'GENmassAA_L', #DP EDIT
+#            'GENdRAA_L', #DP EDIT
 #            'GENidsAA_L', #DP EDIT
 	    'FatJet_pt', # keep this so that we can calculate the HT 
             'Dijet_eta','Dijet_msoftdrop','Dijet_pt','Dijet_phi',
@@ -341,7 +354,7 @@ class TTClass:
             'Dijet_jetId', 'nFatJet', 'Dijet_JES_nom',
             'HLT_PFHT.*', 'HLT_PFJet.*', 'HLT_AK8.*', 'HLT_Mu50', 'HLT_IsoMu*', 'HLT_Ele27_WPTight_Gsf', 'HLT_Ele35_WPTight_Gsf',
             'event', 'eventWeight', 'luminosityBlock', 'run',
-	    'NPROC', 'NFLAGS', 'NJETID', 'NJETS', 'NPT', 'NKIN', 'NTightMu', 'NTightEl', 'NGoodMu', 'NGoodEl', 'PreLepVeto', 'PostLepVeto'
+	    'NPROC', 'NFLAGS', 'NJETID', 'NJETS', 'NPHOTONS','NPT', 'NKIN', 'NTightMu', 'NTightEl', 'NGoodMu', 'NGoodEl', 'PreLepVeto', 'PostLepVeto'
         ]
 
         if not self.a.isData:
