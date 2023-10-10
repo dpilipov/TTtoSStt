@@ -69,9 +69,9 @@ selection.a.Define('norm',str(norm))
 photons = VarGroup('Diphotons')
 photons.Add('lead_vect',"hardware::TLvector(Diphoton_pt[0], Diphoton_eta[0], Diphoton_phi[0], Diphoton_mass[0])")
 photons.Add('sublead_vect','hardware::TLvector(Diphoton_pt[1], Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
-photons.Add('deltaEta', 'abs(lead_vect.Eta() -sublead_vect.Eta())')
-photons.Add('Smass','hardware::InvariantMass({lead_vect,sublead_vect})')
-photons.Add('deltaR','hardware::DeltaR(lead_vect,sublead_vect)')
+#photons.Add('deltaEta', 'abs(lead_vect.Eta() -sublead_vect.Eta())')
+#photons.Add('Smass','hardware::InvariantMass({lead_vect,sublead_vect})')
+#photons.Add('deltaR','hardware::DeltaR(lead_vect,sublead_vect)')
 
 # Plotting variables
 plotting_vars = VarGroup('plotting_vars')
@@ -80,13 +80,13 @@ plotting_vars = VarGroup('plotting_vars')
 #plotting_vars.Add('mtop1','Dijet_msoftdrop[1]')
 plotting_vars.Add('pt','Diphoton_pt[0]')
 #plotting_vars.Add('pt1','Diphoton_pt[1]')
-plotting_vars.Add('deltaEta','deltaEta')
+plotting_vars.Add('deltaEta','abs(Diphoton_eta[0]-Diphoton_eta[1])')
 #plotting_vars.Add('deltaEta','deltaEta')
 #plotting_vars.Add('pt','Dijet_pt[0]')
-plotting_vars.Add('Smass','Smass')
+plotting_vars.Add('Smass','hardware::InvariantMass({lead_vect,sublead_vect})')
 #plotting_vars.Add('topTag0','TvsQCD0')
 #plotting_vars.Add('topTag1','TvsQCD1')
-plotting_vars.Add('deltaR','deltaR')
+plotting_vars.Add('deltaR','hardware::DeltaR(lead_vect,sublead_vect)')
 
 # N-1 cuts to make
 NCuts = CutGroup('NCuts')
@@ -100,7 +100,7 @@ NCuts.Add('pt_cut','Diphoton_pt[0]>50 && Diphoton_pt[1]>50')
 NCuts.Add('deltaEta_cut','deltaEta < 2.4')
 #NCuts.Add('mass_cut','Smass < 500')
 NCuts.Add('Smass_cut','Smass > 15')
-NCuts.Add('deltaR_cut','deltaR < 3.4')
+NCuts.Add('deltaR_cut','deltaR < 4.0')
 
 nodeToPlot = selection.a.Apply([photons,plotting_vars])
 #nodeToPlot = selection.a.Apply([photons,plotting_vars])
@@ -115,9 +115,9 @@ binning = {
 #    'mtphi':[25,800,2200],
 #    'mphi':[25,50,270],
     'pt':[25,200,2200],
-    'deltaEta':[20,0,3.0],
+    'deltaEta':[20,0,3.5],
     'Smass':[25,0,1200],
-    'deltaR':[20,0,3.0]
+    'deltaR':[20,0,6.0]
 }
 
 print('Plotting')
