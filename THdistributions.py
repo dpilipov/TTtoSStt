@@ -6,8 +6,9 @@ import ROOT, collections,sys,os
 sys.path.append('./')
 from optparse import OptionParser
 from collections import OrderedDict
-
-from TIMBER.Analyzer import HistGroup, Correction
+#DP EDIT
+#from TIMBER.Analyzer import HistGroup, Correction
+from TIMBER.Analyzer import HistGroup, Correction, ModuleWorker, analyzer
 from TIMBER.Tools.Common import CompileCpp, ExecuteCmd
 from TIMBER.Tools.Plot import *
 import helpers
@@ -37,24 +38,33 @@ varnames = {
     'Aeta1': 'Sublead photon #eta',
     'Aphi0': 'Leading photon #varphi',
     'Aphi1': 'Sublead photon #varphi',
-    'pt0': 'Leading AK8 jet p_{T}',
-    'pt1': 'Sublead AK8 jet p_{T}',
+    'nAA': 'Number of photons',
+    'dipt0': 'Leading AK8 jet p_{T}',
+    'dipt1': 'Sublead AK8 jet p_{T}',
 #    'HT': 'Sum of lead and sublead jet p_{T}',
-    'eta0': 'Leading AK8 jet #eta',
-    'eta1': 'Sublead AK8 jet #eta',
-    'phi0': 'Leading AK8 jet #varphi',
-    'phi1': 'Sublead AK8 jet #varphi',   
-    'jptALL0': 'Leading AK8 jet p_{T}',
-    'jptALL1': 'Sublead AK8 jet p_{T}',
-    'jetaALL0': 'Leading AK8 jet #eta',
-    'jetaALL1': 'Sublead AK8 jet #eta',
-    'jphiALL0': 'Leading AK8 jet #varphi',
-    'jphiALL1': 'Sublead AK8 jet #varphi',
-    'SmassAA_LNL': 'Diphoton invariant mass m_{aa}',
-    'TPmass_80': 'TP invariant mass M_{Stt}',
+    'dieta0': 'Leading AK8 jet #eta',
+    'dieta1': 'Sublead AK8 jet #eta',
+    'diphi0': 'Leading AK8 jet #varphi',
+    'diphi1': 'Sublead AK8 jet #varphi',   
+    'dimass0': 'Leading AK8 jet mass',
+    'dimass1': 'Sublead AK8 jet mass',
+    'dimasstt': 'Invariant tt mass',
+    'InvmassTT': 'Invariant Dijet mass',
+#    'jptALL0': 'Leading AK8 jet p_{T}',
+#    'jptALL1': 'Sublead AK8 jet p_{T}',
+#    'jetaALL0': 'Leading AK8 jet #eta',
+#    'jetaALL1': 'Sublead AK8 jet #eta',
+#    'jphiALL0': 'Leading AK8 jet #varphi',
+#    'jphiALL1': 'Sublead AK8 jet #varphi',
+#    'jmassALL0': 'Leading AK8 jet mass',
+#    'jmassALL1': 'Sublead AK8 jet mass',
+#    'jmasstt': 'Invariant Dijet mass',
+    'SmassAA_LNL': 'Diphoton invariant mass m_{#gamma #gamma}',
+    'TPmass_LNL': 'TP invariant mass M_{#gamma #gamma t}',
     'dRAA_LNL': 'Diphoton #Delta R',
-    'topTag0': 'top tagger TvsQCD leading jet',
-    'topTag1': 'top tagger TvsQCD subleading jet'
+    'dRtt_LNL': 'Dijet #Delta R',
+    'ditopTag0': 'top tagger TvsQCD leading jet',
+    'ditopTag1': 'top tagger TvsQCD subleading jet'
 }
 
 #varnames={'phi0':'Leading AK8 jet #varphi'}
@@ -75,25 +85,35 @@ def select(setname, args):
 #DP EDIT THClass
     selection = TTClass('dijet_nano/%s_%s_snapshot.txt'%(setname,year),year,1,1)
     selection.OpenForSelection('None')	# apply corrections, define a few columns, etc (does NOT make cuts)
+#DP EDIT testing....
     selection.ApplyTrigs(args.trigEff)
 
     # kinematic definitions
 #DP EDIT
 #    selection.a.Define('pt0','Dijet_pt_corr[0]')
 #    selection.a.Define('pt1','Dijet_pt_corr[1]')
-#    selection.a.Define('pt0','Dijet_pt[0]')
-#    selection.a.Define('pt1','Dijet_pt[1]')
+    selection.a.Define('dipt0','Dijet_pt[0]')
+    selection.a.Define('dipt1','Dijet_pt[1]')
 #    selection.a.Define('HT','Apt0+Apt1')
-    selection.a.Define('eta0','Dijet_eta[0]')
-    selection.a.Define('eta1','Dijet_eta[1]')
-    selection.a.Define('phi0','Dijet_phi[0]')
-    selection.a.Define('phi1','Dijet_phi[1]')
-    selection.a.Define('topTag0','Dijet_deepTag_TvsQCD[0]')
-    selection.a.Define('topTag1','Dijet_deepTag_TvsQCD[1]')
+    selection.a.Define('dieta0','Dijet_eta[0]')
+    selection.a.Define('dieta1','Dijet_eta[1]')
+    selection.a.Define('diphi0','Dijet_phi[0]')
+    selection.a.Define('diphi1','Dijet_phi[1]')
+    selection.a.Define('ditopTag0','Dijet_particleNet_TvsQCD[0]')
+    selection.a.Define('ditopTag1','Dijet_particleNet_TvsQCD[1]')
+    selection.a.Define('dimass0','Dijet_msoftdrop[0]')
+    selection.a.Define('dimass1','Dijet_msoftdrop[1]')
+    selection.a.Define('InvmassTT', 'ImassTT_LNL')
 #    selection.a.Define('eta0_pt800','if (Dijet_pt[0]>800) { Dijet_eta[0] } else { -5.0 }')
 #    selection.a.Define('eta1_pt800','if (Dijet_pt[1]>800) { Dijet_eta[1] } else { -5.0 }')
 #    selection.a.Define('njets','if (Dijet_pt[1]>800) { nFatJet } else { -1 }') 
 #DP EDIT ONLY NEED TO DO THIS WITH VECTORS and HT!!!!
+    selection.a.Define('lead_vect',"hardware::TLvector(Dijet_pt[0], Dijet_eta[0], Dijet_phi[0], Dijet_msoftdrop[0])")
+    selection.a.Define('sublead_vect','hardware::TLvector(Dijet_pt[1], Dijet_eta[1], Dijet_phi[1], Dijet_msoftdrop[1])')
+    selection.a.Define('dimasstt','hardware::InvariantMass({lead_vect,sublead_vect})')
+#    selection.a.Define('jlead_vect','hardware::TLvector(jptALL0,jetaALL0,jphiALL0,jmassALL0)')
+#    selection.a.Define('jsublead_vect','hardware::TLvector(jptALL1,jetaALL1,jphiALL1,jmassALL1)')
+#    selection.a.Define('jmasstt','hardware::InvariantMass({jlead_vect,jsublead_vect})')
 #    selection.a.Define('Apt0','Apt0')
 #    selection.a.Define('Apt1','Apt1')
 #    selection.a.Define('HT','pt0+pt1')
@@ -116,7 +136,9 @@ def select(setname, args):
 #        if (varname == 'TPmass_80'):
 #            hist_tuple = (varname,varname,100,350,2350)
         if ('mass' in varname):
-            hist_tuple = (varname,varname,100,50,2550)
+            hist_tuple = (varname,varname,60,50,6050)
+#        if ('Mass' in varname):
+#            hist_tuple = (varname,varname,100,50,2550)
 	if (varname == 'HT'):
 	    hist_tuple = (varname,varname,200,350,4350)
 	if 'eta' in varname:
@@ -127,6 +149,8 @@ def select(setname, args):
 	    hist_tuple = (varname, varname, 64, 0, 6.0)
 	if 'Tag' in varname:
 	    hist_tuple = (varname, varname, 64, 0, 1)
+        if 'nAA' in varname:
+            hist_tuple = (varname, varname, 15,0,15)
 #        if 'njets' in varname:
 #            hist_tuple = (varname, varname, 64, 0, 15)
 
@@ -161,10 +185,10 @@ if __name__ == "__main__":
     args.trigEff = Correction("TriggerEff"+args.era,'TIMBER/Framework/include/EffLoader.h',['THtrigger2D_%s.root'%args.era,'Pretag'], corrtype='weight')
 
     histgroups = {}
-    # ZJetsHT400 is empty
+    # ZJetsHT400 is empty in some cases!  so be careful...
 #DP EDIT
 #    for setname in ['Data', 'WJetsHT200','WJetsHT400', 'WJetsHT600', 'WJetsHT800', 'ZJetsHT200','ZJetsHT400','ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad', 'ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
-    for setname in ['Data', 'WJetsHT400', 'WJetsHT600', 'WJetsHT800', 'ZJetsHT400','ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad','ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
+    for setname in ['Data', 'WJetsHT400', 'WJetsHT600', 'WJetsHT800', 'ZJetsHT400', 'ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad','ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
 	histgroup = select(setname, args)
 	outfile = ROOT.TFile.Open('rootfiles/kinDist_{}_{}.root'.format(setname,args.era),'RECREATE')
 	outfile.cd()
@@ -181,7 +205,7 @@ if __name__ == "__main__":
     ExecuteCmd('hadd -f rootfiles/kinDist_ttbar_{0}.root rootfiles/kinDist_ttbar-*_{0}.root'.format(args.era))
 
     '''
-    for setname in ['Data', 'WJetsHT400', 'WJetsHT600', 'WJetsHT800', 'ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad', 'ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
+    for setname in ['Data', 'WJetsHT400', 'WJetsHT600', 'WJetsHT800','ZJetsHT400', 'ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad', 'ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
 	print('Preparing plots for {} {}'.format(setname, args.era))
 	
 	# perform histogram + ROOT file creation if flag is passed
@@ -213,7 +237,7 @@ if __name__ == "__main__":
 
 	# get the background hists
 	bkg_hists = OrderedDict()
-	#for bkg in ['WJetsHT400', 'WJetsHT600', 'WJetsHT800', 'ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad','ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
+	#for bkg in ['WJetsHT400', 'WJetsHT600', 'WJetsHT800','ZJetsHT400', 'ZJetsHT600', 'ZJetsHT800', 'ttbar-allhad','ttbar-semilep', 'QCDHT700','QCDHT1000','QCDHT1500','QCDHT2000']:
 	for bkg in histgroups.keys():
 	    histgroups[bkg][varname].SetTitle('%s 20%s'%(varname, args.era)) # empty title
 	    # add all subgroups together, i.e. QCD = QCDHT700 + QCDHT1000 + QCDHT1500 + QCDHT2000
