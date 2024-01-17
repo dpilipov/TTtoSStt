@@ -87,7 +87,7 @@ plotting_vars.Add('pt','Dijet_pt[0]')
 #plotting_vars.Add('pt0','Dijet_pt[0]')
 #plotting_vars.Add('pt1','Dijet_pt[1]')
 #plotting_vars.Add('Amass','Amass')
-plotting_vars.Add('topTag','Dijet_deepTag_TvsQCD[0]')
+plotting_vars.Add('topTag','Dijet_particleNet_TvsQCD[0]')
 #plotting_vars.Add('topTag0','TvsQCD0')
 #plotting_vars.Add('topTag1','TvsQCD1')
 #plotting_vars.Add('AdR','AdeltaR')
@@ -98,7 +98,7 @@ NCuts.Add('deltaEta_cut','deltaEta < 1.6')
 NCuts.Add('pt_cut','Dijet_pt[0] > 350 && Dijet_pt[1] > 350')
 #NCuts.Add('absEta_cut','abs(Dijet_eta[0]) < 2.4 && abs(Dijet_eta[1]) < 2.4')
 NCuts.Add('mtop_cut','Dijet_msoftdrop[0] > 50 && Dijet_msoftdrop[1] > 50')
-NCuts.Add('topTag_cut','Dijet_deepTag_TvsQCD[0] > 0.2')
+NCuts.Add('topTag_cut','Dijet_particleNet_TvsQCD[0] > 0.2')
 # dummy cuts so we can plot values of interest
 #NCuts.Add('Apt_cut','Apt0 > 50 && Apt1 > 50')
 #NCuts.Add('AdR_cut','AdR < 1.6')
@@ -127,18 +127,26 @@ binning = {
 print('Plotting')
 print(nminus1Nodes)
 for nkey in nminus1Nodes.keys():
+    print('1')
     if nkey=='full': continue
     print('\t{}'.format(nkey))
 #    if ('mtop' not in nkey) and ('pt0' not in nkey) and ('pt1' not in nkey) and ('deltaEta' not in nkey) and ('topTag0' not in nkey) and ('topTag1' not in nkey):
     if ('mtop' not in nkey) and ('pt' not in nkey) and ('deltaEta' not in nkey) and ('topTag' not in nkey):
-	continue	
+	continue
+    print('2')	
     var = nkey.replace('_cut','').replace('minus_','')
+    print('3')
     hist_tuple = (var,var,binning[var][0],binning[var][1],binning[var][2])
+    print('4')
     hist = nminus1Nodes[nkey].DataFrame.Histo1D(hist_tuple,var,'norm')
+    print('5')
     hist.GetValue()
+    print('6')
     nminus1Hists.Add(var,hist)
 
+print('X1')
 nminus1Hists.Do('Write')
+print('X2')
 oFile.Close()
 
 print ('%s sec'%(time.time()-start))

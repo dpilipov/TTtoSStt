@@ -9,7 +9,8 @@ import ROOT
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import mplhep as hep
+#DP EDIT - this was causing a problem... is it necessaary?!?
+#import mplhep as hep
 from root_numpy import hist2array
 from glob import glob
 
@@ -26,30 +27,11 @@ from glob import glob
 varnames = {
     'Apt0': (r'Leading photon $p_{T}$', r'Events/20 GeV'),
     'Apt1': (r'Sublead photon $p_{T}$', r'Events/20 GeV'),
-    'HT': (r'Sum of lead and sublead AK8 jet $p_{T}$', r'Events/20 GeV'),
-    'Aeta0': (r'Leading photon $\eta$', r'Events/10'),
-    'Aeta1': (r'Sublead photon $\eta$', r'Events/10'),
-    'Aphi0': (r'Leading photon $\varphi$', r'Events/10'),
-    'Aphi1': (r'Sublead photon $\varphi$', r'Events/10'),
-    'jptALL0': (r'Leading AK8 jet $p_{T}$', r'Events/20 GeV'),
-    'jptALL1': (r'Sublead AK8 jet $p_{T}$', r'Events/20 GeV'),
-    'jetaALL0': (r'Leading AK8 jet $\eta$', r'Events/10'),
-    'jetaALL1': (r'Sublead AK8 jet $\eta$', r'Events/10'),
-    'jphiALL0': (r'Leading AK8 jet $\varphi$', r'Events/10'),
-    'jphiALL1': (r'Sublead AK8 jet $\varphi$',r'Events/10'),
-    'SmassAA_LNL': (r'Diphoton invariant mass $m_{aa}$',r'Events/20 GeV'),
-    'TPmass_80': (r'TP invariant mass M_{Stt}',r'Events/20 GeV'),
-    'pt0': (r'Leading AK8 jet $p_{T}$', r'Events/20 GeV'),
-    'pt1': (r'Sublead AK8 jet $p_{T}$', r'Events/20 GeV'),
-#    'HT': (r'Sum of lead and sublead jet $p_{T}$', r'Events/20 GeV'),
-    'eta0': (r'Leading AK8 jet $\eta$',r'Events/10'),
-    'eta1': (r'Sublead AK8 jet $\eta$',r'Events/10'),
-    'phi0': (r'Leading AK8 jet $\varphi$',r'Events/10'),
-    'phi1': (r'Sublead AK8 jet $\varphi$',r'Events/10'), 
-#    'Smass': (r'Diphoton invariant mass $m_{aa}$',r'Events/20 GeV'),
-    'dRAA_LNL': (r'Diphoton $\Delta R$',r'Events/10'),
-    'topTag0': (r'top tagger TvsQCD leading jet',r'Events/10'),
-    'topTag1': (r'top tagger TvsQCD subleading jet',r'Events/10')
+    'HT': (r'Sum of lead and sublead photon $p_{T}$', r'Events/20 GeV'),
+    'Aeta0': (r'Leading photon $\eta$',r'Events/10'),
+    'Aeta1': (r'Sublead photon $\eta$',r'Events/10'),
+    'Aphi0': (r'Leading photon $\varphi$',r'Events/10'),
+    'Aphi1': (r'Sublead photon $\varphi$',r'Events/10')
 }
 
 def plot(var,year,xtitle,ytitle):
@@ -71,8 +53,8 @@ def plot(var,year,xtitle,ytitle):
     colorsData = []
 
 #DP EDIT
-    for name in ['Data','QCD','VJets','ttbar']:
-#    for name in ['Data','QCD','ttbar']:
+#    for name in ['Data','QCD','VJets','ttbar']:
+    for name in ['Data','QCD','ttbar']:
         tempFile = ROOT.TFile.Open('rootfiles/kinDist_{}_{}.root'.format(name, year))
         h = tempFile.Get(var)
         if name == 'Data':
@@ -89,9 +71,9 @@ def plot(var,year,xtitle,ytitle):
                 labelsBkg.append('Multijets')
                 colorsBkg.append('y')
 #DP EDIT
-            elif name == 'VJets':
-                labelsBkg.append('V+jets')
-                colorsBkg.append('aquamarine')
+#            elif name == 'VJets':
+#                labelsBkg.append('V+jets')
+#                colorsBkg.append('aquamarine')
             elif name == 'ttbar':
                 labelsBkg.append(r'$t\bar{t}$')
                 colorsBkg.append('r')
@@ -124,7 +106,8 @@ def plot(var,year,xtitle,ytitle):
         errorsRatio.append(sigma)
     errorsRatio = np.asarray(errorsRatio)
 
-    plt.style.use([hep.style.CMS])
+#DP EDIT
+#    plt.style.use([hep.style.CMS])
     f, axs = plt.subplots(2, 1, sharex=True, sharey=False, gridspec_kw={'height_ratios':[4,1],'hspace':0.05})
     axs = axs.flatten()
     plt.sca(axs[0])

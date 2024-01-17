@@ -123,18 +123,26 @@ binning = {
 print('Plotting')
 print(nminus1Nodes)
 for nkey in nminus1Nodes.keys():
+    print('1')
     if nkey=='full': continue
     print('\t{}'.format(nkey))
 #    if ('pt0' not in nkey) and ('pt1' not in nkey) and ('deltaEta' not in nkey) and ('mass' not in nkey) and ('dR' not in nkey):
     if ('pt' not in nkey) and ('deltaEta' not in nkey) and ('Smass' not in nkey) and ('deltaR' not in nkey):
 	continue	
+    print('2')
     var = nkey.replace('_cut','').replace('minus_','')
+    print('3')
     hist_tuple = (var,var,binning[var][0],binning[var][1],binning[var][2])
+    print('4')
     hist = nminus1Nodes[nkey].DataFrame.Histo1D(hist_tuple,var,'norm')
+    print('5')
     hist.GetValue()
+    print('6')
     nminus1Hists.Add(var,hist)
 
+print('X1')
 nminus1Hists.Do('Write')
+print('X2')
 oFile.Close()
 
 print ('%s sec'%(time.time()-start))

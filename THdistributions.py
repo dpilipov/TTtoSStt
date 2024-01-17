@@ -181,8 +181,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     #if args.recreate: args.trigEff = Correction("TriggerEff"+args.era,'TIMBER/Framework/include/EffLoader.h',['THtrigger2D_%s.root'%args.era,'Pretag'], corrtype='weight')
-
-    args.trigEff = Correction("TriggerEff"+args.era,'TIMBER/Framework/include/EffLoader.h',['THtrigger2D_%s.root'%args.era,'Pretag'], corrtype='weight')
+#DP EDIT commented out the following line, and added a new one referencing HT0 root file instead!
+#    args.trigEff = Correction("TriggerEff"+args.era,'TIMBER/Framework/include/EffLoader.h',['THtrigger2D_%s.root'%args.era,'Pretag'], corrtype='weight')
+    args.trigEff = Correction("TriggerEff"+args.era,'TIMBER/Framework/include/EffLoader.h',['THtrigger2D_HT0_%s.root'%args.era,'Pretag'], corrtype='weight')
 
     histgroups = {}
     # ZJetsHT400 is empty in some cases!  so be careful...

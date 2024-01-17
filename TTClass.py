@@ -14,7 +14,7 @@ class TTClass:
 	    # there is an issue with empty events TTrees, so make sure they don't make it through to the analyzer (mainly seen in V+Jets, esp at low HT)
 	    invalidFiles = []
 	    for iFile in infiles:
-		#print('Adding {} to Analyzer'.format(iFile))
+		print('Adding {} to Analyzer'.format(iFile))
 		f = ROOT.TFile.Open(iFile)
 		if not f.Get('Events'):
 		    print('\tWARNING: {} has no Events TTree - will not be added to analyzer'.format(iFile))
@@ -44,6 +44,7 @@ class TTClass:
         self.cuts = self.config['CUTS']
         self.newTrigs = self.config['TRIGS']	
         self.trigs = {
+#DP EDIT
 	    16:['HLT_PFHT800','HLT_PFHT900'],
             17:["HLT_PFHT1050","HLT_AK8PFJet500","HLT_AK8PFHT750_TrimMass50","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet400_TrimMass30"],
             19:['HLT_PFHT1050','HLT_AK8PFJet500'], # just use 19 for trigger script for 17b, 17all
@@ -64,32 +65,28 @@ class TTClass:
 	print('Adding cutflow information...\n\t{}\t{}'.format(varName, var))
 	self.a.Define('{}'.format(varName),str(var))
 	
-# DP EDIT  added Yifan's code here, edited for two AK8 jets
     def Preselection(self):
-# DP EDIT
-#        self.a.Cut('nFatJet','nFatJet > 0')# at least 1 AK8 jet
-#        self.a.Cut('nJet','nJet > 0') # at least 1 AK4 jet
-#        self.a.Cut('nLepton','nElectron > 0 || nMuon > 0') #make sure at least one lepton exist. Save some effort in c++ code        
+# DP EDIT: preselection: at least 2 fatjets, 2 photons
         self.a.Cut('nFatJet','nFatJet > 1')# at least 2 AK8 jets
-        self.a.Cut('nPhoton','nPhoton > 1')# at least 2 photon
-#        self.a.Define('DijetIds','PickDijetsV2(FatJet_phi,Jet_phi,Electron_pt,Muon_pt,Jet_btagCSVV2)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
-        self.a.Define('DijetIds','PickDijets(FatJet_phi,FatJet_eta,FatJet_phi,FatJet_msoftdrop)') #Output: Jet selection parameter of the form{FatJetId,JetId,Leptonid,Leptonpt,ElectronId,MuonId}. We demand lepton pt>50GeV, at least one AK4Jet(named Jet) is b-tagged.
-#        self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1 && DijetIds[2] > -1') #Cut the data according to our standard (FatJet, Jet, Lepton condtion respectively)
-#        self.a.Define('bJetFromJets','DijetIds[1]')#take a look at which jet is being selected as the bjet
+        self.a.Cut('nPhoton_cut','nPhoton > 1')# at least 2 photon
+        self.a.Define('DijetIds','PickDijets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop)') 
         self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1') #Cut the data according to 2 AK8 jets
+    #DP edit: also add electron-veto photon AND photons within the acceptable barrel region
+        self.a.Define('DiphotonIds','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Cut('prePselected','DiphotonIds[0]> -1 && DiphotonIds[1] > -1') #Cut the data according to 2 photons
+        self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonIds[0]] && Photon_electronVeto[DiphotonIds[1]]')
+        self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonIds[0]] || Photon_isScEtaEE[DiphotonIds[0]]) && (Photon_isScEtaEB[DiphotonIds[1]] || Photon_isScEtaEE[DiphotonIds[1]])')
         return self.a.GetActiveNode()
 
-    #now we define the selection according to the following standard: 2 top tagging AK8; DP EDIT and not the following.... , and a 2D cut on lepton+b
-    def Selection(self,Ttagparam):
+    #now we define the selection according to the following standard: 2 top tagging AK8
+    #DP EDIT and 2 photon tagging Photon
+    def Selection(self,Ttagparam,Ptagparam):
         self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[0]] > {}'.format(Ttagparam))
         self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[1]] > {}'.format(Ttagparam))
-
-#        self.a.ObjectFromCollection('bJet','Jet','DijetIds[1]')#isolate the b jet for 2D cut analysis purposes
-#        self.a.Define('Pick2DCut','TwoDCutV2(DijetIds[2],DijetIds[4],DijetIds[5],Electron_pt,Muon_pt,bJet_pt,Electron_phi,Muon_phi,bJet_phi,Electron_eta,Muon_eta,bJet_eta)')
-        self.a.Cut('2DCut','Pick2DCut[0] == 1 || Pick2DCut[1] == 1')#if either condition is met, we keep the event.
+    #DP edit: also add Photon tag selection
+        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[0]] > {}'.format(Ptagparam))
+        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[1]] > {}'.format(Ptagparam))
         return self.a.GetActiveNode()
-
-
 
 
     def getNweighted(self):
@@ -128,8 +125,8 @@ class TTClass:
 	self.NJETS = self.getNweighted()
 	self.AddCutflowColumn(self.NJETS, "NJETS")
 
-#DP EDIT ADD 2 photon Preselection
-        self.a.Cut('nphotons','nPhoton >= 2')
+#DP EDIT ADD 2 photon Preselection - change it back to no requirement
+        self.a.Cut('nPhotons','nPhoton > 1')
         self.NPHOTONS = self.getNweighted()
         self.AddCutflowColumn(self.NPHOTONS, "NPHOTONS")
 
@@ -143,13 +140,36 @@ class TTClass:
 	self.NPT = self.getNweighted()
 	self.AddCutflowColumn(self.NPT, "NPT")
 
+        self.a.Cut('ApT', 'Photon_pt[0] > {0}  && Photon_pt[1] > {0}'.format(self.cuts['Apt']))
+        self.NAPT = self.getNweighted()
+        self.AddCutflowColumn(self.NAPT, "NAPT")
+
         self.a.Define('DijetIdxs','PickDijets(FatJet_pt, FatJet_eta, FatJet_phi, FatJet_msoftdrop)')
         self.a.Cut('dijetsExist','DijetIdxs[0] > -1 && DijetIdxs[1] > -1')
-	self.NKIN = self.getNweighted()
-	self.AddCutflowColumn(self.NKIN, "NKIN")
+        self.NKIN = self.getNweighted()
+        self.AddCutflowColumn(self.NKIN, "NKIN")
+
+        self.a.Define('DiphotonIdxs','PickDiphotons(Photon_pt, Photon_eta, Photon_phi, Photon_mass)')
+        self.a.Cut('diphotonsExist','DiphotonIdxs[0] > {0} && DiphotonIdxs[1] > {0}'.format(self.cuts['mvaID']))
+	self.NPHOTONKIN = self.getNweighted()
+	self.AddCutflowColumn(self.NPHOTONKIN, "NPHOTONKIN")
 
         self.a.SubCollection('Dijet','FatJet','DijetIdxs',useTake=True)
         self.a.Define('Dijet_vect','hardware::TLvector(Dijet_pt, Dijet_eta, Dijet_phi, Dijet_msoftdrop)')
+        self.a.SubCollection('Diphoton','Photon','DiphotonIdxs',useTake=True)
+        self.a.Define('Diphoton_vect','hardware::TLvector(Diphoton_pt, Diphoton_eta, Diphoton_phi, Diphoton_mass)')
+
+	self.a.Define('deltaEta','abs(Dijet_eta[0]-Dijet_eta[1])')
+	self.a.Cut('deltaEta_cut','deltaEta < 1.6')
+	self.NDELTAETA = self.getNweighted()
+	self.AddCutflowColumn(self.NDELTAETA,'NDELTAETA')
+    #DP edit: also add electron-veto photon AND photons within the acceptable barrel region
+        self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonIdxs[0]] && Photon_electronVeto[DiphotonIdxs[1]]')
+        self.NPHOTONNOTELEC = self.getNweighted()
+        self.AddCutflowColumn(self.NPHOTONNOTELEC,'NPHOTONNOTELEC')
+        self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonIdxs[0]] || Photon_isScEtaEE[DiphotonIdxs[0]]) && (Photon_isScEtaEB[DiphotonIdxs[1]] || Photon_isScEtaEE[DiphotonIdxs[1]])')
+        self.NPHOTONINBARR = self.getNweighted()
+        self.AddCutflowColumn(self.NPHOTONINBARR,'NPHOTONINBARR')
         return self.a.GetActiveNode()
 
     def ApplyStandardCorrections(self,snapshot=False):
@@ -255,8 +275,8 @@ class TTClass:
 	return self.a.GetActiveNode()
 #DP EDIT
     def analysis1(self):
-#        self.a.Define('SidsAA','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('AA_vector','PickLeadingDiPhotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('AA_vector','PickLeadingDiPhotons(Diphoton_pt,Diphoton_eta,Diphoton_phi,Diphoton_mass,Diphoton_mvaID)')
+        self.a.Define('nAA','nPhoton')
         self.a.Define('Apt0','AA_vector[0]')
         self.a.Define('Apt1','AA_vector[1]')
         self.a.Define('Aeta0','AA_vector[2]')
@@ -265,62 +285,23 @@ class TTClass:
         self.a.Define('Aphi1','AA_vector[5]')
         self.a.Define('Amass0','AA_vector[6]')
         self.a.Define('Amass1','AA_vector[7]')
-#        self.a.Define('SidsAA_LNL','PickDiphotonsLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-#        self.a.Define('GENidsAA_L','PickGENDiphotonsLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-#        self.a.Define('SmassAA','SmassCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('SmassAA_LNL','SmassCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-#        self.a.Define('GENmassAA_L','GENmassCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-#        self.a.Define('dRAA','dRCalc(Photon_pt,Photon_eta,Photon_phi,Photon_mass,200.0)')
-        self.a.Define('dRAA_LNL','dRCalcLeadingOrdered(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
-#        self.a.Define('GENdRAA_L','GENdRCalcLeading(GenPart_pt, GenPart_eta, GenPart_phi, GenPart_mass, GenPart_pdgId, 22, GenPart_genPartIdxMother, 6100001)')
-#        self.a.Define('lpt_vector','PickLeadingLepton(nElectron,nMuon,Electron_pt,Muon_pt,Electron_eta,Muon_eta,Electron_phi,Muon_phi,Electron_mass,Muon_mass)')
-#        self.a.Define('lpt','lpt_vector[0]')
-#        self.a.Define('leta','lpt_vector[1]')
-#        self.a.Define('lphi','lpt_vector[2]')
-#        self.a.Define('lmass','lpt_vector[3]')
-#        self.a.Define('METpt','MET_pt')
-#        self.a.Define('METphi','MET_phi')
-#  USE THE NEXT LINE FOR HADRONIC+LEPTONIC, and the LINE BELOW FOR ALL HADRONIC
-#        self.a.Define('bjet_vector','PickLeadingQJets(Jet_pt,Jet_eta,Jet_phi,Jet_mass,Jet_hadronFlavour,5)')
-#        self.a.Define('bjet_vector','PickLeadingQJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
-#        self.a.Define('bpt0','bjet_vector[0]')
-#        self.a.Define('bpt1','bjet_vector[1]')
-#        self.a.Define('beta0','bjet_vector[2]')
-#        self.a.Define('beta1','bjet_vector[3]')
-#        self.a.Define('bphi0','bjet_vector[4]')
-#        self.a.Define('bphi1','bjet_vector[5]')
-#        self.a.Define('bmass0','bjet_vector[6]')
-#        self.a.Define('bmass1','bjet_vector[7]')
-# USE THE NEXT LINE FOR ALL HADRONIC, and the LINE BELOW for HADRONIC+LEPTONIC
-#        self.a.Define('jet_vector','PickLeadingDiJets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
-#        self.a.Define('jet_vector','PickLeadingDiJetsDR(bjet_vector,1.2,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_hadronFlavour,5)')
-#        self.a.Define('jpt0','jet_vector[0]')
-#        self.a.Define('jpt1','jet_vector[1]')
-#        self.a.Define('jeta0','jet_vector[2]')
-#        self.a.Define('jeta1','jet_vector[3]')
-#        self.a.Define('jphi0','jet_vector[4]')
-#        self.a.Define('jphi1','jet_vector[5]')
-#        self.a.Define('jmass0','jet_vector[6]')
-#        self.a.Define('jmass1','jet_vector[7]')
-#DP EDIT: Go back to the more general selection for dijets - not including TvsQCD - and leave the SR/CR selection for selection step!!!!
-#        self.a.Define('jetIdsDP','PickDijetsV3(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
-#        self.a.Define('jetALL_vector','PickDijetsV3_ALL(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
+        self.a.Define('AmvaID0','AA_vector[8]')
+        self.a.Define('AmvaID1','AA_vector[9]')
+        self.a.Define('AA_vectorI','PickLeadingDiPhotonsI(Diphoton_pt,Diphoton_cutBased)')
+        self.a.Define('AcutBased0','AA_vectorI[0]')
+        self.a.Define('AcutBased1','AA_vectorI[1]')
+        self.a.Define('SmassAA_LNL','SmassCalcLeadingOrdered(Diphoton_pt,Diphoton_eta,Diphoton_phi,Diphoton_mass)')
+        self.a.Define('ImassTT_LNL','SmassCalcLeadingOrdered(Dijet_pt,Dijet_eta,Dijet_phi,Dijet_msoftdrop)')
+        self.a.Define('dRAA_LNL','dRCalcLeadingOrdered(Diphoton_pt,Diphoton_eta,Diphoton_phi,Diphoton_mass)')
+        self.a.Define('dRtt_LNL','dRCalcLeadingOrdered(Dijet_pt,Dijet_eta,Dijet_phi,Dijet_msoftdrop)')
         self.a.Define('jetIdsDP','PickDijets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop)')
         self.a.Define('jetALL_vector','PickDijetsV(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop,FatJet_particleNet_TvsQCD)')
         self.a.Define('jetRegion','jetALL_vector[0]')
         self.a.Define('jptALL0','jetALL_vector[1]')
         self.a.Define('jptALL1','jetALL_vector[2]')
-        self.a.Define('jetaALL0','jetALL_vector[3]')
-        self.a.Define('jetaALL1','jetALL_vector[4]')
-        self.a.Define('jphiALL0','jetALL_vector[5]')
-        self.a.Define('jphiALL1','jetALL_vector[6]')
-        self.a.Define('jmassALL0','jetALL_vector[7]')
-        self.a.Define('jmassALL1','jetALL_vector[8]')
         self.a.Define('jTvsQCDALL0','jetALL_vector[9]')
         self.a.Define('jTvsQCDALL1','jetALL_vector[10]')
         self.a.Define('TPmass_LNL','TPmassCalcLeading(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass)')
-        self.a.Define('TPmass_80','TPmassCalcLeading80(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
-        self.a.Define('TPmass_70','TPmassCalcLeading70(AA_vector,jetIdsDP,FatJet_pt,FatJet_eta,FatJet_phi,FatJet_mass,FatJet_particleNet_TvsQCD)')
 
     def Snapshot(self,node=None, colNames=[]):
 	'''
@@ -331,30 +312,26 @@ class TTClass:
 
         columns = [
             'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1','Amass0','Amass1',
-#            'lpt', 'leta', 'lphi','lmass','METpt','METphi',
-#            'bpt0','bpt1','beta0','beta1','bphi0','bphi1','bmass0','bmass1',
-#            'jpt0','jpt1','jeta0','jeta1','jphi0','jphi1','jmass0','jmass1',
-            'jetRegion',
-            'jptALL0','jptALL1','jetaALL0','jetaALL1','jphiALL0','jphiALL1','jmassALL0','jmassALL1','jTvsQCDALL0','jTvsQCDALL1',
-#            'SmassAA', 
-            'TPmass_LNL','TPmass_80','TPmass_70',#DP EDIT
-#            'dRAA', #DP EDIT
-#            'SidsAA', #DP EDIT
+            'AmvaID0','AmvaID1','AcutBased0','AcutBased1','nAA','jetRegion',
+            'jptALL0','jptALL1',
+            'jTvsQCDALL0','jTvsQCDALL1',
+            'TPmass_LNL',#DP EDIT 'TPmass_80','TPmass_70',#DP EDIT
             'SmassAA_LNL', #DP EDIT
             'dRAA_LNL', #DP EDIT
-#            'SidsAA_LNL', #DP EDIT
-#            'GENmassAA_L', #DP EDIT
-#            'GENdRAA_L', #DP EDIT
-#            'GENidsAA_L', #DP EDIT
+            'ImassTT_LNL','dRtt_LNL', #DP EDIT
 	    'FatJet_pt', # keep this so that we can calculate the HT 
             'Dijet_eta','Dijet_msoftdrop','Dijet_pt','Dijet_phi',
             'Dijet_deepTagMD_HbbvsQCD', 'Dijet_deepTagMD_ZHbbvsQCD',
             'Dijet_deepTagMD_TvsQCD', 'Dijet_deepTag_TvsQCD', 'Dijet_particleNet_HbbvsQCD',
             'Dijet_particleNet_TvsQCD', 'Dijet_particleNetMD.*', 'Dijet_rawFactor', 'Dijet_tau*',
             'Dijet_jetId', 'nFatJet', 'Dijet_JES_nom',
+            'Diphoton_pt','Diphoton_eta','Diphoton_phi','Diphoton_mass',
+            'Diphoton_mvaID','Diphoton_cutBased',
             'HLT_PFHT.*', 'HLT_PFJet.*', 'HLT_AK8.*', 'HLT_Mu50', 'HLT_IsoMu*', 'HLT_Ele27_WPTight_Gsf', 'HLT_Ele35_WPTight_Gsf',
             'event', 'eventWeight', 'luminosityBlock', 'run',
-	    'NPROC', 'NFLAGS', 'NJETID', 'NJETS', 'NPHOTONS','NPT', 'NKIN', 'NTightMu', 'NTightEl', 'NGoodMu', 'NGoodEl', 'PreLepVeto', 'PostLepVeto'
+	    'NPROC', 'NFLAGS', 'NJETS', 'NPHOTONS','NJETID', 'NPT', 'NAPT', 'NKIN', 
+            'NPHOTONKIN','NDELTAETA','NPHOTONNOTELEC', 'NPHOTONINBARR',
+            'NTightMu', 'NTightEl', 'NGoodMu', 'NGoodEl', 'PreLepVeto', 'PostLepVeto'
         ]
 
         if not self.a.isData:
@@ -389,8 +366,16 @@ class TTClass:
         self.a.Define('Dijet_particleNetMD_HbbvsQCD','Dijet_particleNetMD_Xbb/(Dijet_particleNetMD_Xbb+Dijet_particleNetMD_QCD)')
         self.ApplyStandardCorrections(snapshot=False)
         self.a.Define('Dijet_vect_trig','hardware::TLvector(Dijet_pt, Dijet_eta, Dijet_phi, Dijet_msoftdrop)')
-        self.a.Define('mth_trig','hardware::InvariantMass(Dijet_vect_trig)')
-        self.a.Define('m_javg','(Dijet_msoftdrop[0]+Dijet_msoftdrop[0])/2')
+        self.a.Define('Top1_vect_trig','hardware::TLvector(Dijet_pt[0], Dijet_eta[0], Dijet_phi[0], Dijet_msoftdrop[0])')
+#        self.a.Define('Photon1_vect_trig','hardware::TLvector(Diphoton_pt[0],Diphoton_eta[0], Diphoton_phi[0], Diphoton_mass[0])')
+        self.a.Define('Photon1_vect_trig','hardware::TLvector(Apt0,Aeta0,Aphi0,Amass0)')
+#        self.a.Define('Photon2_vect_trig','hardware::TLvector(Diphoton_pt[1],Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
+        self.a.Define('Photon2_vect_trig','hardware::TLvector(Apt1,Aeta1,Aphi1,Amass1)')
+#DP EDIT to be changed!!!!
+        self.a.Define('Smass_trig','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
+        self.a.Define('mth_trig','hardware::InvariantMass({Top1_vect_trig,Photon1_vect_trig,Photon2_vect_trig})')
+        self.a.Define('m_javg','(Dijet_msoftdrop[0]+Dijet_msoftdrop[1])/2')
+#        self.a.Define('Diph_mvaID','ConvertToVecF(AmvaID0,AmvaID1)')
         # JME variations
         if not self.a.isData:
             pt_calibs, top_mass_calibs = JMEvariationStr('Top',variation)     # the pt calibs are the same for
@@ -412,32 +397,55 @@ class TTClass:
         self.a.Define('HT','pt0+pt1')
         return self.a.GetActiveNode()
 
-    def ApplyTopPick_Signal(self, TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
+#DP EDIT add the photons, remove the XbbTagger
+#    def ApplyTopPick_Signal(self, TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
+    def ApplyTopPick_Signal(self, TopTagger, PhotonTagger, pt, TopScoreCut, PhotonScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
 	objIdxs = 'ObjIdxs{}_{}{}'.format('_ttbarCR' if ttbarCR else '', 'Not' if invert else '', TopTagger)
 	if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
-	    self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
+#	    self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
+           self.a.Define(objIdxs, 'PickTopWithSFs2(%s, %s, {0, 1}, %f, %f, %f, "20%s", %i)'%(TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation))
 	    # at this point, we'll have a column named ObjIdxs_(NOT)_particleNet_TvsQCD contianing the indices of which of the two jets is the top and the phi (top-0, Phi-1)
+            # both jets checked to be tops: for CR need one top one not top
 	    # or, if neither passed it will look like {-1,-1}
-	    self.a.Define('tIdx','{}[0]'.format(objIdxs))
-	    self.a.Define('hIdx','{}[1]'.format(objIdxs))
+	   self.a.Define('tIdx0','{}[0]'.format(objIdxs))
+	   self.a.Define('tIdx1','{}[1]'.format(objIdxs))
 	#DEBUG
 	nTot = self.a.DataFrame.Sum("genWeight").GetValue()
 	print('NTot before TopPick (signal) = {}'.format(nTot))
-	self.a.Cut('HasTop','tIdx > -1')
+        self.a.Cut('HasTop','tIdx0 > -1')
+        print('at A')
+        objAIdxs = 'ObjAIdxs{}_{}{}'.format('_ttbarCR' if ttbarCR else '', 'Not' if invert else '', PhotonTagger)
+        print('at B')
+        if objAIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
+#           self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
+           print('at C')
+#           self.a.Define(objAIdxs, 'PickTagF( %s, {0, 1}, %f)'%(TopTagger, TopScoreCut))
+           self.a.Define(objAIdxs, 'PickTagF(%s, {0, 1}, %f)'%(PhotonTagger, PhotonScoreCut))
+           print('at D')
+           self.a.Define('aIdx0','{}[0]'.format(objAIdxs))
+           self.a.Define('aIdx1','{}[1]'.format(objAIdxs))
         #DEBUG
         nTot = self.a.DataFrame.Sum("genWeight").GetValue()
-        print('NTot after TopPick (signal) = {}'.format(nTot))
+        print('NTot after PhotonPick (signal) = {}'.format(nTot))
         # at this point, rename Dijet -> Top/Higgs based on its index determined above
-        self.a.ObjectFromCollection('Top','Dijet','tIdx',skip=['msoftdrop_corrH'])
-        self.a.ObjectFromCollection('Higgs','Dijet','hIdx',skip=['msoftdrop_corrT'])
+#        self.a.ObjectFromCollection('Top','Dijet','tIdx',skip=['msoftdrop_corrH'])
+#        self.a.ObjectFromCollection('Higgs','Dijet','hIdx',skip=['msoftdrop_corrT'])
+        self.a.ObjectFromCollection('Top','Dijet','tIdx0')
+        self.a.ObjectFromCollection('Photon1','Diphoton','aIdx0')
+        self.a.ObjectFromCollection('Photon2','Diphoton','aIdx1')
 
         self.a.Define('Top_vect','hardware::TLvector(Top_pt_corr, Top_eta, Top_phi, Top_msoftdrop_corrT)')
-        self.a.Define('Higgs_vect','hardware::TLvector(Higgs_pt_corr, Higgs_eta, Higgs_phi, Higgs_msoftdrop_corrH)')
-        self.a.Define('mth','hardware::InvariantMass({Top_vect,Higgs_vect})')
+#        self.a.Define('Higgs_vect','hardware::TLvector(Higgs_pt_corr, Higgs_eta, Higgs_phi, Higgs_msoftdrop_corrH)')
+        self.a.Define('Photon1_vect','hardware::TLvector(Apt0, Aeta0, Aphi0, Amass0)')
+        self.a.Define('Photon2_vect','hardware::TLvector(Apt1, Aeta1, Aphi1, Amass1)')
+        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect,Photon2_vect})')
+        self.a.Define('mth','hardware::InvariantMass({Top_vect,Photon1_vect,Photon2_vect})')
         return self.a.GetActiveNode()	
 
 
-    def ApplyTopPick(self,tagger='deepTag_TvsQCD',invert=False, CRv2=None, ttbarCR=False):
+#DP EDIT: change to particleNet; keep both tops, include photons
+#    def ApplyTopPick(self,tagger='deepTag_TvsQCD',invert=False, CRv2=None, ttbarCR=False):
+    def ApplyTopPick(self,tagger='particleNet__TvsQCD',invert=False, CRv2=None, ttbarCR=False):
         objIdxs = 'ObjIdxs%s_%s%s'%('_ttbarCR' if ttbarCR else '','Not' if invert else '',tagger)
         if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
 
@@ -501,29 +509,33 @@ class TTClass:
             self.a.AddCorrection(corr, evalArgs={"xval":"m_javg","yval":"mth_trig"})    
         return self.a.GetActiveNode()
 
-    def ApplyTopTag_ttbarCR(self, tagger='deepTagMD_HbbvsQCD', topTagger='deepTagMD_TvsQCD', signal=False, loose=True):
+    def ApplyTopTag_ttbarCR(self, tagger, topTagger='particleNet_TvsQCD', signal=False, loose=True):
 	'''
 	Used to create the Fail and Pass regions of the ttbar control region. 
-	The ttbar CR Fail is defined identically to the SR fail, that is, one jet PNet top-tagged and the other jet failing an Hbb score. 
-	The ttbar CR Pass region is then defined by one jet PNet top-tagged and the other jet passing the deepAK8 MD top tagging.
-	WPs: https://twiki.cern.ch/twiki/bin/view/CMS/DeepAK8Tagging2018WPsSFs#Working_Points
+        CR is defined by one true and one false top
+	The ttbar CR Fail is defined by one true one false photon. 
+	The ttbar CR Pass region is then defined by both true photons.
 	'''
-	# 0.5% WP = loose, 0.1% = tight
+	# -1.0 = loose, -0.9 = tight
 	if ('16' in self.year):
-	    WP = 0.632 if loose else 0.889
+	    WP = -1.0 if loose else -0.9
 	elif (self.year == '17'):
-	    WP = 0.554 if loose else 0.863
+	    WP = -1.0 if loose else -0.9
 	else:
-	    WP = 0.685 if loose else 0.92
+	    WP = -1.0 if loose else -0.9
 	checkpoint = self.a.GetActiveNode()
 	passFail = {}
-	# for the ttbar CR, we start same as SR fail. Then we want to operate on the Hbb candidate jet, since we've already ID'd the top
-	passFail['SRfail'] = self.a.Cut('ttbarCR_Hbb_fail','Higgs_{0} < 0.8'.format(tagger) if not signal else 'NewTagCats==0')
-	# the Fail region is then a failing deepAK8 tagger 
-	passFail['fail'] = self.a.Cut('ttbarCR_top_fail','Higgs_{0} < {1}'.format(topTagger,WP))
+	# for the ttbar CR, not the same as SR fail. SR fail = two true tops with one true photon and one false photon.  Then we want to operate on the Saa candidate photons...
+        passFail['SRpass'] = self.a.Cut('ttbarSR_Saa_pass','(Dijet_{0}[0] > 0.8) && (Dijet_{0}[1] > 0.8) && (Diphoton_{1}[0] > {3}) && (Diphoton_{1}[1] > {3})'.format(topTagger,tagger,WP))
+        passFail['SRfail'] = self.a.Cut('ttbarSR_Saa_pass','(Dijet_{0}[0] > 0.8) && (Dijet_{0}[1] > 0.8) && (((Diphoton_{1}[0] > {3}) && (Diphoton_{1}[1] < {3})) || ((Diphoton_{1}[1] > {3}) && (Diphoton_{1}[0] < {3})))'.format(topTagger,tagger,WP) if not signal else 'NewTagCats==0')
+#	passFail['SRfail'] = self.a.Cut('ttbarCR_Saa_fail','Diphoton_{0}[ < 0.8'.format(tagger) if not signal else 'NewTagCats==0')
+	# the Fail region is then one failing and one passing deepAK8 tagger 
+        passFail['fail'] = self.a.Cut('ttbarCR_Saa_fail','(((Dijet_{0}[0] > 0.8) && (Dijet_{0}[1] < 0.8)) || ((Dijet_{0}[1] > 0.8) && (Dijet_{0}[0] < 0.8))) && (((Diphoton_{1}[0] > {3}) && (Diphoton_{1}[1] < {3})) || ((Diphoton_{1}[1] > {3}) && (Diphoton_{1}[0] < {3})))'.format(topTagger,tagger,WP))
+#	passFail['fail'] = self.a.Cut('ttbarCR_Saa_fail','Higgs_{0} < {1}'.format(topTagger,WP))
 	self.a.SetActiveNode(checkpoint)
-	# the Pass region is then a deepAK8 MD top tagger > some working point 
-	passFail['pass'] = self.a.Cut('ttbarCR_top_pass','Higgs_{0} > {1}'.format(topTagger,WP))
+	# the Pass region is then both photon taggers > some working point 
+        passFail['pass'] = self.a.Cut('ttbarCR_Saa_pass','(((Dijet_{0}[0] > 0.8) && (Dijet_{0}[1] < 0.8)) || ((Dijet_{0}[1] > 0.8) && (Dijet_{0}[0] < 0.8))) && (Diphoton_{1}[0] > {3}) && (Diphoton_{1}[1] > {3})'.format(topTagger,tagger,WP))
+#	passFail['pass'] = self.a.Cut('ttbarCR_Saa_pass','Higgs_{0} > {1}'.format(topTagger,WP))
 	# reset active node, return dict
 	self.a.SetActiveNode(checkpoint)
 	return passFail
@@ -571,7 +583,51 @@ class TTClass:
 	# reset node state, return dict
         self.a.SetActiveNode(checkpoint)
         return passLooseFail
-        
+
+    def ApplySTag(self, SRorCR, tagger='mvaID', signal=False):
+        '''
+            SRorCR [str] = "SR" or "CR" - used to generate cutflow information after each Higgs tagger cut
+            tagger [str] = discriminator used for Higgs ID. default: particleNetMD_HbbvsQCD
+                NOTE: The ApplyTopPick() function will create a column with the name Higgs_particleNetMD_HbbvsQCD, so we have to select for that below
+            signal [bool] = whether signal or not. If signal, then perform Higgs tag based on columns created after SF application:
+                Pass:   NewTagCats==2           # see ParticleNet_SF.cc and THselection.py for more information
+                Loose:  NewTagCats==1
+                Fail:   NewTagCats==0
+        '''
+        assert(SRorCR == 'SR' or SRorCR == 'CR')
+        checkpoint = self.a.GetActiveNode()
+        passLooseFail = {}
+        # Higgs Pass + cutflow info
+        passLooseFail["pass"] = self.a.Cut('STag_pass','(Photon1_{0} > {1}) && (Photon2_{0} > {1})'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==2')
+        if SRorCR == 'SR':
+            self.higgsP_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_SR, "higgsP_SR")
+        else:
+            self.higgsP_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
+        # Higgs Loose + cutflow info
+        self.a.SetActiveNode(checkpoint)
+        passLooseFail["loose"] = self.a.Cut('STag_loose','((Photon1_{0} > {1}) && (Photon2_{0} < {1})) || ((Photon2_{0} > {1}) && (Photon1_{0} < {1}))'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==1') 
+
+        if SRorCR == 'SR':
+            self.higgsL_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsL_SR, "higgsL_SR")
+        else:
+            self.higgsL_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsL_CR, "higgsL_CR")
+        # Higgs Fail + cutflow info
+        self.a.SetActiveNode(checkpoint)
+        passLooseFail["fail"] = self.a.Cut('STag_fail','(Photon1_{0} < {1}) && (Photon2_{0} < {1})'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==0')
+        if SRorCR == 'SR':
+            self.higgsF_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_SR, "higgsF_SR")
+        else:
+            self.higgsF_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_CR, "higgsF_CR")
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return passLooseFail
+
     ###############
     # For studies #
     ###############

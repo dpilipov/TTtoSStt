@@ -112,7 +112,10 @@ def printEfficiencies(selection=False):
 	First, for mT = 1800, mPhi = 75, 100, 125, 250, 500
 	Then, for mPhi = 125, mT = 1400, 1500, 1600, 1700, 1800  (SKIP 1700 - it's missing 2018)
     '''
-    labels = ["Sample","nProc","nFlags","nJets","nJetID","p_{t}","nKin","$|\Delta\eta|$","preLeptonVeto","postLeptonVeto"]
+#DP EDIT
+#    labels = ["Sample","nProc","nFlags","nJets","nJetID","p_{t}","nKin","$|\Delta\eta|$","preLeptonVeto","postLeptonVeto"]
+    labels = ["Sample","nProc","nFlags","nJets","nPhotons","nJetID","p_{t}","nKin","preLeptonVeto","postLeptonVeto"]
+
     if selection:
 	labels.extend(["CR_topCut","CR_F","CR_L","CR_P","SR_topCut","SR_F","SR_L","SR_P"])
     # first keep constant mT
@@ -125,17 +128,22 @@ def printEfficiencies(selection=False):
 #    phiMasses = [75, 100, 125, 250, 500]
     for mPhi in phiMasses:
 	nProc = 0
-	res = generateCutflow('{}-{}-{}'.format(prefix, mT, mPhi), 750, selection)
-	print('\n------------------ {} -------------------'.format('{}-{}-{}'.format(prefix, mT, mPhi)))
+#DP EDIT ... just for now!!! eventually will have more samples...
+#	res = generateCutflow('{}-{}-{}'.format(prefix, mT, mPhi), 750, selection)
+	res = generateCutflow('{}'.format(prefix), 750, selection)
+#	print('\n------------------ {} -------------------'.format('{}-{}-{}'.format(prefix, mT, mPhi)))
+	print('\n------------------ {} -------------------'.format('{}'.format(prefix)))
 	for year, dicts in res.items():
 	    print('----------------- {} -----------------'.format('20'+year))
-	    latexRow = '{}-{}-{}'.format(prefix, mT, mPhi) + " &"
+#	    latexRow = '{}-{}-{}'.format(prefix, mT, mPhi) + " &"
+	    latexRow = '{}'.format(prefix) + " &"
 	    for var, val in dicts.items():
 		if (var == 'NPROC'):
 		    nProc = val
 		    latexRow += " 1 &"
 		else:
-		    latexRow += " {0:.3f} &".format(float(val)/float(nProc))
+                    if (float(nProc) > 0.0):
+		        latexRow += " {0:.3f} &".format(float(val)/float(nProc))
 	    print(" & ".join(labels)+" \\\\")
 	    print(latexRow)
 
@@ -147,17 +155,23 @@ def printEfficiencies(selection=False):
     Tmasses = [1000]
     for Tmass in Tmasses:
 	nProc = 0
-	res = generateCutflow('{}-{}-{}'.format(prefix, Tmass, mPhi), 750, selection)
-	print('\n------------------ {} -------------------'.format('{}-{}-{}'.format(prefix, Tmass, mPhi)))
+#DP EDIT
+#	res = generateCutflow('{}-{}-{}'.format(prefix, Tmass, mPhi), 750, selection)
+#	print('\n------------------ {} -------------------'.format('{}-{}-{}'.format(prefix, Tmass, mPhi)))
+	res = generateCutflow('{}'.format(prefix), 750, selection)
+	print('\n------------------ {} -------------------'.format('{}'.format(prefix)))
 	for year, dicts in res.items():
 	    print('----------------- {} -----------------'.format('20'+year))
-	    latexRow = '{}-{}-{}'.format(prefix, Tmass, mPhi) + " &"
+#DP EDIT
+#	    latexRow = '{}-{}-{}'.format(prefix, Tmass, mPhi) + " &"
+	    latexRow = '{}'.format(prefix) + " &"
 	    for var, val in dicts.items():
                 if (var == 'NPROC'):
                     nProc = val
                     latexRow += " 1 &"
                 else:
-                    latexRow += " {0:.3f} &".format(float(val)/float(nProc))
+                    if (float(nProc) > 0.0):
+                        latexRow += " {0:.3f} &".format(float(val)/float(nProc))
             print(" & ".join(labels)+" \\\\")
             print(latexRow)
 
@@ -173,4 +187,4 @@ if __name__ == "__main__":
 
 #DP EDIT ... do not use for now....
     printYields(args.selection)
-#    printEfficiencies(args.selection)
+    printEfficiencies(args.selection)

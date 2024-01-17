@@ -150,6 +150,52 @@ int getNewTopCat(float SF, int oldCat, float eff, double rand, bool invert) {
     return newCat;
 };
 
+RVec<int> PickTopWithSFs2(RVec<float> TvsQCD,
+                  RVec<float> pt,
+                  RVec<int> idxs,
+                  float scoreCut,
+                  float eff0,
+                  float eff1,
+                  std::string year,
+                  int variation) {
+    if (idxs.size() > 2) {
+        std::cout << "PickTop - WARNING: You have input more than two indices. Only two jet indices accepted, assuming first two indices.\n";
+    }
+
+    std::vector<int> out(2);
+    float WP = scoreCut;
+    int idx0 = idxs[0];
+    int idx1 = idxs[1];
+    bool invertScore=false;
+    bool isTop0=false;
+    bool isTop1=false;
+    int orig_score0 = getOriginalTopCat(TvsQCD[idx0], WP);
+    int orig_score1 = getOriginalTopCat(TvsQCD[idx1], WP);
+    float SF0 = getSF(orig_score0, pt[idx0], year, variation);
+    float SF1 = getSF(orig_score1, pt[idx1], year, variation);
+    if ((SF0==0) || (SF1==0)) {std::cerr<<"SF is 0\n";}
+    double rand0 = RAND();
+    double rand1 = RAND();
+    int new_score0 = getNewTopCat(SF0, orig_score0, eff0, rand0, invertScore);
+    int new_score1 = getNewTopCat(SF1, orig_score1, eff1, rand1, invertScore);
+    isTop0 = (new_score0 == 1);
+    isTop1 = (new_score1 == 1);
+    if (isTop0 && isTop1) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop0) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop1) {
+        out[0] = idx1;
+        out[1] = idx0;
+    } else {
+        out[0] = -1;
+        out[1] = -1;
+    }
+    return out;
+}
+
 RVec<int> PickTopWithSFs(RVec<float> TvsQCD, 
                   RVec<float> HbbvsQCD, 
                   RVec<float> pt, 
@@ -248,6 +294,24 @@ RVec<int> PickDijets(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<floa
         }       
     }
     return {jet0Idx,jet1Idx};
+}
+
+RVec<int> PickDiphotons(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass) {
+    int ph0Idx = -1;
+    int ph1Idx = -1;
+    for (int iph = 0; iph < pt.size(); iph++) {
+        if (ph1Idx == -1) {
+            if (pt[iph] > 25) {
+                if (ph0Idx == -1) {
+                    ph0Idx = iph;
+                } else {
+                    ph1Idx = iph;
+                    break;
+                }
+            }
+        }
+    }
+    return {ph0Idx,ph1Idx};
 }
 
 RVec<float> PickDijetsV(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, RVec<float> Jet_btagCMVA) {
@@ -386,7 +450,7 @@ RVec<float> PickDijetsV3_ALL(RVec<float> pt, RVec<float> eta, RVec<float> phi, R
     return {IdReg, pt0,pt1,eta0,eta1,phi0,phi1,mass0,mass1,tag0,tag1};
 }
 
-RVec<int> PickDiphotons(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, float SmassTarget) {
+RVec<int> PickDiphotons_X(RVec<float> pt, RVec<float> eta, RVec<float> phi, RVec<float> mass, float SmassTarget) {
     int ph0Idx = -1;
     int ph1Idx = -1;
     float SmassTry = 0.0;
@@ -1042,7 +1106,7 @@ RVec<float> PickLeadingDiJetsDR(RVec<float> bjet_vec, float dRselection, RVec<fl
     return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
 }
 
-RVec<float> PickLeadingDiPhotons(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<float> Jet_phi, RVec<float> Jet_mass) {
+RVec<float> PickLeadingDiPhotons(RVec<float> Photon_pt, RVec<float> Photon_eta, RVec<float> Photon_phi, RVec<float> Photon_mass, RVec<float> Photon_mvaID) {
     float qpt0=-1.0;
     float qpt1=-1.0;
     float qeta0=-5.0;
@@ -1051,19 +1115,99 @@ RVec<float> PickLeadingDiPhotons(RVec<float> Jet_pt, RVec<float> Jet_eta, RVec<f
     float qphi1=-5.0;
     float qmass0=-1.0;
     float qmass1=-1.0;
-    if (Jet_pt.size()>0) {
-       qpt0=Jet_pt[0];
-       qeta0=Jet_eta[0];
-       qphi0=Jet_phi[0];
-       qmass0=Jet_mass[0];
-       if (Jet_pt.size()>1) {
-         qpt1=Jet_pt[1];
-         qeta1=Jet_eta[1];
-         qphi1=Jet_phi[1];
-         qmass1=Jet_mass[1];
+    float qmvaID0=-5.0;
+    float qmvaID1=-5.0;
+    if (Photon_pt.size()>0) {
+       qpt0=Photon_pt[0];
+       qeta0=Photon_eta[0];
+       qphi0=Photon_phi[0];
+       qmass0=Photon_mass[0];
+       qmvaID0=Photon_mvaID[0];
+       if (Photon_pt.size()>1) {
+         qpt1=Photon_pt[1];
+         qeta1=Photon_eta[1];
+         qphi1=Photon_phi[1];
+         qmass1=Photon_mass[1];
+         qmvaID1=Photon_mvaID[1];
        }
     }
-    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1};
+    return {qpt0,qpt1,qeta0,qeta1,qphi0,qphi1,qmass0,qmass1,qmvaID0,qmvaID1};
+}
+
+RVec<int> PickLeadingDiPhotonsI(RVec<float> Photon_pt,RVec<int> Photon_cutBased) {
+    int qcutBased0=-1;
+    int qcutBased1=-1;
+    if (Photon_pt.size()>0) {
+       qcutBased0=Photon_cutBased[0];
+       if (Photon_pt.size()>1) {
+         qcutBased1=Photon_cutBased[1];
+       }
+    }
+    return {qcutBased0,qcutBased1};
+}
+
+std::vector<float> ConvertToVecF(float f1, float f2) {
+    std::vector<float> fout(2);
+    fout[0]=f1;
+    fout[1]=f2;
+    return fout;
+}
+
+std::vector<int> PickTagF(RVec<float> tagScore, RVec<int> idxs, float scoreCut) {
+    if (idxs.size()>2) {
+        std::cout << "PickTagF -- WARNING: You have input more than two indices. Only two accepted. Assuming first two indices.";
+    }
+    std::vector<int> out(2);
+    float WP = scoreCut;
+
+    int idx0 = idxs[0];
+    int idx1 = idxs[1];
+    bool isTop0, isTop1;
+    isTop0 = (WP < tagScore[idx0]);
+    isTop1 = (WP < tagScore[idx1]);
+
+    if (isTop0 && isTop1) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop0) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop1) {
+        out[0] = idx1;
+        out[1] = idx0;
+    } else {
+        out[0] = -1;
+        out[1] = -1;
+    }
+    return out;
+}
+
+std::vector<int> PickTagI(RVec<int> tagScore, RVec<int> idxs, int scoreCut) {
+    if (idxs.size()>2) {
+        std::cout << "PickTagI -- WARNING: You have input more than two indices. Only two accepted. Assuming first two indices.";
+    }
+    std::vector<int> out(2);
+    int IWP = scoreCut;
+    int idx0 = idxs[0];
+    int idx1 = idxs[1];
+    bool isTop0, isTop1;
+
+    isTop0 = (IWP < tagScore[idx0]);
+    isTop1 = (IWP < tagScore[idx1]);
+    if (isTop0 && isTop1) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop0) {
+        out[0] = idx0;
+        out[1] = idx1;
+    } else if (isTop1) {
+        out[0] = idx1;
+        out[1] = idx0;
+    } else {
+        out[0] = -1;
+        out[1] = -1;
+    }
+    return out;
 }
 
 std::vector<int> PickTop(RVec<float> mass, RVec<float> tagScore, RVec<int> idxs, std::pair<float,float> massCut, float scoreCut, bool invertScore=false) {
