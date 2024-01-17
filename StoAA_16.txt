@@ -1,1 +1,0 @@
-/uscms/home/dpilipov/nobackup/TIMBER/CMSSW_11_1_4/src/TopHBoostedAllHad/B2G-RunIISummer20UL16NanoAODv9_SIGNAL_1000_200_S0toAA_tallhadronic.root

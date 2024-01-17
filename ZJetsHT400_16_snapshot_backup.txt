@@ -1,6 +1,0 @@
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_1of6.root
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_2of6.root
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_3of6.root
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_4of6.root
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_5of6.root
-root://cmseos.fnal.gov//store/user/dpilipov/topHBoostedAllHad/snapshot/THsnapshot_ZJetsHT400_16_6of6.root
