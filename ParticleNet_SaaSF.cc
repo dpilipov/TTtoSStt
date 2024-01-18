@@ -21,33 +21,33 @@ using namespace ROOT::VecOps;
 
 class PNetSaaSFHandler {
   private:
-    RVec<float> _wps;     // MP [0.8, 0.98], HP [0.98, 1.0]
-    RVec<float> _effs;    // efficiencies will be calculated via TIMBER then fed to constructor
+    float _wp;     // MP [0.8, 0.98], HP [0.98, 1.0]
+    float _eff;    // efficiencies will be calculated via TIMBER then fed to constructor
     std::string _year;    // 2016APV, 2016, 2017, 2018
     int _var;             // 0: nominal, 1: up, 2: down, passed to constructor
     TRandom _rand;        // used for random number generation
-    int _newTags[3]  = {0,0,0};      // number of jets in each new category [fail][loose][tight]
-    int _origTags[3] = {0,0,0};      // original num jets in each category [fail][loose][tight]
+    int _newTags[2]  = {0,0};      // number of photons in each new category [fail][pass]
+    int _origTags[2] = {0,0};      // original num photons in each category [fail][pass]
     
     // SF[_var][pt]
     // variations are described above, pt cats are [400, 600), [600, 800), [800, +inf) across all years
-    // HP (tight) [0.98, 1.0]
+    // HP (tight) [0.98, 1.0]   PASS
     float SF2016APV_T[3][3] = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2016_T[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2017_T[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2018_T[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
-    // MP (loose) [0.8, 0.98]
+    // MP (loose) [0.8, 0.98]  FAIL
     float SF2016APV_L[3][3] = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2016_L[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2017_L[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     float SF2018_L[3][3]    = {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
 
   public:
-    PNetSaaSFHandler(RVec<float> wps, RVec<float> effs, std::string year, int var);  // default: wps={-0.995,-0.9}, effs={effl,effT}, var=0/1/2
+    PNetSaaSFHandler(float wp, float eff, std::string year, int var);  // default: wps={-0.995,-0.9}, effs={effl,effT}, var=0/1/2
     ~PNetSaaSFHandler();
     int getWPcat(float taggerVal);                                    // determine WP category: 0: fail, 1: loose, 2: tight
     float getSF(float pt, float taggerVal);                           // gets the proper SF based on jet's pt and score as well as internal variables _year, _var
-    int updateTag(int jetCat, float pt, float taggerVal);	      // determines the jet's new tagger category
+    int updateTag(int photonCat, float pt, float taggerVal);	      // determines the jet's new tagger category
     int createTag(float taggerVal);				      // create new tagger category based on jet's original tagger value
     void printVals();						      // print the number of jets in each category
 
@@ -61,13 +61,13 @@ class PNetSaaSFHandler {
 
 void PNetSaaSFHandler::printVals() {
     // prints the number of original and new tagger values
-    printf("Number of Original\n\tFail: %d\n\tLoose: %d\n\tPass: %d\n\tTotal: %d\n", _origTags[0], _origTags[1], _origTags[2], _origTags[0]+_origTags[1]+_origTags[2]);
-    printf("Number of New\n\tFail: %d\n\tLoose: %d\n\tPass: %d\n\tTotal: %d\n", _newTags[0], _newTags[1], _newTags[2], _newTags[0]+_newTags[1]+_newTags[2]);
+    printf("Number of Original\n\tFail: %d\n\tPass: %d\n\tTotal: %d\n", _origTags[0], _origTags[1], _origTags[0]+_origTags[1]);
+    printf("Number of New\n\tFail: %d\n\tPass: %d\n\tTotal: %d\n", _newTags[0], _newTags[1], _newTags[0]+_newTags[1]);
 };
 
-PNetSaaSFHandler::PNetSaaSFHandler(RVec<float> wps, RVec<float> effs, std::string year, int var) {
-  _wps = wps;
-  _effs = effs;
+PNetSaaSFHandler::PNetSaaSFHandler(float wp, float eff, std::string year, int var) {
+  _wp = wp;
+  _eff = eff;
   _year = year;
   _var = var;
   // unique but repeatable random numbers. For repeated calls in the same event, random #s from Rndm() will be identical
@@ -82,11 +82,8 @@ PNetSaaSFHandler::~PNetSaaSFHandler() {
 int PNetSaaSFHandler::getWPcat(float taggerVal) {
   // determine the WP category we're in, 0:fail, 1:loose, 2:tight
   int wpCat;
-  if ((taggerVal > _wps[0]) && (taggerVal < _wps[1])) { // loose
+  if (taggerVal > _wp) { // pass
     wpCat = 1;
-  }
-  else if (taggerVal > _wps[1]) { // tight
-    wpCat = 2;
   }
   else {  // fail
     wpCat = 0;
@@ -137,13 +134,9 @@ int PNetSaaSFHandler::createTag(float taggerVal) {
      * this MUST be called in TIMBER before running the rest of the script, as it places all jets into their respective categories for later use in updateTag()
      * This function is meant to be called after selecting the top and higgs in CR and SR (see THselection.py - getEfficiencies)
     */
-    if ((taggerVal > _wps[0]) && (taggerVal < _wps[1])) {
+    if (taggerVal > _wp) {
 	_origTags[1]++;
 	return 1;
-    }
-    else if (taggerVal > _wps[1]) {
-	_origTags[2]++;
-	return 2;
     }
     else {
 	_origTags[0]++;
@@ -151,7 +144,7 @@ int PNetSaaSFHandler::createTag(float taggerVal) {
     }
 };
 
-int PNetSaaSFHandler::updateTag(int jetCat, float pt, float taggerVal) {
+int PNetSaaSFHandler::updateTag(int photonCat, float pt, float taggerVal) {
     /* updates the tagger category for phi jets
      * https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods#2a_Jet_by_jet_updating_of_the_b
      * Params:
@@ -159,13 +152,15 @@ int PNetSaaSFHandler::updateTag(int jetCat, float pt, float taggerVal) {
      * 	 pt        = jet pt
      * 	 taggerVal = particleNet tagger value
     */ 
-    float eff_L = _effs[0];
-    float eff_T = _effs[1];
-    float SF_L = getSF(pt, taggerVal);
-    float SF_T = getSF(pt, taggerVal);
+    float eff = _eff;
+    float SF = getSF(pt, taggerVal);
+    float SF_T = SF;
+    float SF_L = SF;
+    float eff_T = eff;
+    float eff_L = eff;
     double rn = _rand.Rndm();
-    int newCat = jetCat;	// grab the original tag category, will be updated
-    // begin logic
+    int newCat = photonCat;	// grab the original tag category, will be updated
+    // begin logica
     if ((SF_L < 1) && (SF_T < 1)) {
 	if ( (newCat==2) && (rn < (1.-SF_T)) ) newCat=0;	// tight (2) -> untag (0)
 	if ( (newCat==1) && (rn < (1.-SF_L)) ) newCat=0;	// loose (1) -> untag (0)
@@ -230,13 +225,9 @@ RVec<int> PNetSaaSFHandler::createTag(RVec<float> taggerVals) {
   for (size_t ijet=0; ijet<taggerVals.size(); ijet++) {   // loop over all jets
     int cat;
     float taggerVal = taggerVals[ijet];
-    if ((taggerVal > _wps[0]) && (taggerVal < _wps[1])) {   // 0.8 < tag < 0.98
+    if (taggerVal > _wp) {   // 0.8 < tag < 0.98
       _origTags[1]++;
       jetCats[ijet] = 1;
-    }
-    else if ((taggerVal > _wps[1])) {   // tag > 0.98
-      _origTags[2]++;
-      jetCats[ijet] = 2;
     }
     else {    // tag < 0.8
       _origTags[0]++;
@@ -258,8 +249,9 @@ RVec<int> PNetSaaSFHandler::updateTag(RVec<int> jetCats, RVec<float> pt, RVec<fl
   */
   //printf("Updating tag categories - 0: Fail, 1: Loose, 2: Tight\n");
   RVec<int> cats(jetCats.size());
-  float eff_L = _effs[0];
-  float eff_T = _effs[1];
+  float eff = _eff;
+  float eff_T = eff;
+  float eff_L = eff;
   for (size_t ijet=0; ijet<pt.size(); ijet++) {
     // get the SF for loose and tight using the jet's pt, tagger value. The getSF() function uses the internal year value and calculates the tagger WP
     // pt, taggerVals, and jetCats should be same length, so ijets should work for indexing

@@ -399,8 +399,8 @@ class TTClass:
 
 #DP EDIT add the photons, remove the XbbTagger
 #    def ApplyTopPick_Signal(self, TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
-    def ApplyTopPick_Signal(self, TopTagger, PhotonTagger, pt, TopScoreCut, PhotonScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
-	objIdxs = 'ObjIdxs{}_{}{}'.format('_ttbarCR' if ttbarCR else '', 'Not' if invert else '', TopTagger)
+    def ApplyTopPick_Signal(self, TopTagger, PhotonTagger, pt, TopScoreCut, PhotonScoreCut, eff0, eff1, year, TopVariation):
+	objIdxs = 'ObjIdxs_{}'.format(TopTagger)
 	if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
 #	    self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
            self.a.Define(objIdxs, 'PickTopWithSFs2(%s, %s, {0, 1}, %f, %f, %f, "20%s", %i)'%(TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation))
@@ -413,15 +413,11 @@ class TTClass:
 	nTot = self.a.DataFrame.Sum("genWeight").GetValue()
 	print('NTot before TopPick (signal) = {}'.format(nTot))
         self.a.Cut('HasTop','tIdx0 > -1')
-        print('at A')
-        objAIdxs = 'ObjAIdxs{}_{}{}'.format('_ttbarCR' if ttbarCR else '', 'Not' if invert else '', PhotonTagger)
-        print('at B')
+        objAIdxs = 'ObjAIdxs_{}'.format(PhotonTagger)
         if objAIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
 #           self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
-           print('at C')
 #           self.a.Define(objAIdxs, 'PickTagF( %s, {0, 1}, %f)'%(TopTagger, TopScoreCut))
            self.a.Define(objAIdxs, 'PickTagF(%s, {0, 1}, %f)'%(PhotonTagger, PhotonScoreCut))
-           print('at D')
            self.a.Define('aIdx0','{}[0]'.format(objAIdxs))
            self.a.Define('aIdx1','{}[1]'.format(objAIdxs))
         #DEBUG
@@ -584,49 +580,41 @@ class TTClass:
         self.a.SetActiveNode(checkpoint)
         return passLooseFail
 
-    def ApplySTag(self, SRorCR, tagger='mvaID', signal=False):
+    def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
         '''
             SRorCR [str] = "SR" or "CR" - used to generate cutflow information after each Higgs tagger cut
             tagger [str] = discriminator used for Higgs ID. default: particleNetMD_HbbvsQCD
                 NOTE: The ApplyTopPick() function will create a column with the name Higgs_particleNetMD_HbbvsQCD, so we have to select for that below
             signal [bool] = whether signal or not. If signal, then perform Higgs tag based on columns created after SF application:
-                Pass:   NewTagCats==2           # see ParticleNet_SF.cc and THselection.py for more information
-                Loose:  NewTagCats==1
+                Pass:   NewTagCats==1           # see ParticleNet_SF.cc and THselection.py for more information
                 Fail:   NewTagCats==0
         '''
         assert(SRorCR == 'SR' or SRorCR == 'CR')
         checkpoint = self.a.GetActiveNode()
-        passLooseFail = {}
+        passFail = {}
         # Higgs Pass + cutflow info
-        passLooseFail["pass"] = self.a.Cut('STag_pass','(Photon1_{0} > {1}) && (Photon2_{0} > {1})'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==2')
-        if SRorCR == 'SR':
+        if (SRorCR == 'SR'):
+            passFail["pass"] = self.a.Cut('STag_pass','(Diphoton_{2}[0] > {3}) && (Diphoton_{2}[1] > {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsP_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsP_SR, "higgsP_SR")
-        else:
-            self.higgsP_CR = self.getNweighted()
-            self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
-        # Higgs Loose + cutflow info
-        self.a.SetActiveNode(checkpoint)
-        passLooseFail["loose"] = self.a.Cut('STag_loose','((Photon1_{0} > {1}) && (Photon2_{0} < {1})) || ((Photon2_{0} > {1}) && (Photon1_{0} < {1}))'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==1') 
-
-        if SRorCR == 'SR':
-            self.higgsL_SR = self.getNweighted()
-            self.AddCutflowColumn(self.higgsL_SR, "higgsL_SR")
-        else:
-            self.higgsL_CR = self.getNweighted()
-            self.AddCutflowColumn(self.higgsL_CR, "higgsL_CR")
-        # Higgs Fail + cutflow info
-        self.a.SetActiveNode(checkpoint)
-        passLooseFail["fail"] = self.a.Cut('STag_fail','(Photon1_{0} < {1}) && (Photon2_{0} < {1})'.format(tagger,self.cuts[tagger]) if not signal else 'NewTagCats==0')
-        if SRorCR == 'SR':
+            self.a.SetActiveNode(checkpoint)
+            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsF_SR, "higgsF_SR")
         else:
+            passFail["pass"] = self.a.Cut('STag_pass','(Diphoton_{2}[0] > {3} && Diphoton_{2}[1] > {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsP_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
+        # Higgs Fail + cutflow info
+            self.a.SetActiveNode(checkpoint)
+            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+#            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+#            passFail["fail"] = self.a.Cut('STag_fail','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_CR = self.getNweighted()
             self.AddCutflowColumn(self.higgsF_CR, "higgsF_CR")
         # reset node state, return dict
         self.a.SetActiveNode(checkpoint)
-        return passLooseFail
+        return passFail
 
     ###############
     # For studies #
