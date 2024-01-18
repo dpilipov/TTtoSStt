@@ -580,6 +580,16 @@ class TTClass:
         self.a.SetActiveNode(checkpoint)
         return passLooseFail
 
+    def ApplySTagTopTag_Check(self, Stagger, StaggerWP, Toptagger, ToptaggerWP):
+        checkpoint = self.a.GetActiveNode()
+        STPpassTest = {}
+        STPpass = self.a.Cut('STagTopTagTestPass','(Diphoton_{0}[0] > {1}) && (Diphoton_{0}[1] > {1}) && (Dijet_{2}[0] > {3}) && (Dijet_{2}[1] > {3})'.format(Stagger, StaggerWP, Toptagger, ToptaggerWP))
+        self.STPpassTest = self.getNweighted()
+        self.AddCutflowColumn(self.STPpassTest,"STPpassTest") 
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return STPpassTest
+
     def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
         '''
             SRorCR [str] = "SR" or "CR" - used to generate cutflow information after each Higgs tagger cut

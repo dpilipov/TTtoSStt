@@ -116,6 +116,9 @@ def TTselection(args):
 
 	# SIGNAL
 # WE DO NOT NEED THIS....	if signal:
+            print('DOING THE SIGNAL TEST - PRE SF')
+            selection.a.SetActiveNode(kinOnly)
+            passTest = selection.ApplySTagTopTag_Check(photon_tagger, -0.8, top_tagger, 0.8)
 	    print('----------------------- CONTROL REGION --------------------------------------------------------------')
 	    # CONTROL REGION - ONE TOP REAL ONE NOT
 	    selection.a.SetActiveNode(kinOnly)
@@ -158,8 +161,9 @@ def TTselection(args):
 		# MakeTemplateHistos takes in the template histogram and then the variables which to plot in the form [x, y]
 		# in this case, 'Smass' is the x axis (S mass) and 'mth' is the y axis (T' mass = St mass)
 		# both of these variables were created/defined during the ApplyTopPick() and ApplyHiggsTag() steps above (see THClass)
-                templates = selection.a.MakeTemplateHistos(ROOT.TH2F('MthvMs_%s'%mod_name,'MthvMs %s with %s'%(mod_title,t),40,60,260,22,800,3000),['Smass','mth'])
-                templates.Do('Write')
+                templates = selection.a.MakeTemplateHistos(ROOT.TH2F('MthvMs_%s'%mod_name,'MthvMs %s with %s'%(mod_title,t),40,60,1260,22,800,3000),['Smass','mth'])
+#                templates = selection.a.MakeTemplateHistos(ROOT.TH1F('MthvMs_%s'%mod_name,'MthvMs %s with %s'%(mod_title,t),40,60,1260),['Smass'])
+#                templates.Do('Write')
     '''
     # now process cutflow information
     cutflowInfo = OrderedDict([
@@ -187,7 +191,7 @@ def TTselection(args):
         scale = ROOT.TH1F('scale','xsec*lumi/genEventSumw',1,0,1)
         scale.SetBinContent(1,selection.GetXsecScale())
         scale.Write()
-        #selection.a.PrintNodeTree('NodeTree_selection.pdf',verbose=True)
+#        selection.a.PrintNodeTree('NodeTree_selection.pdf',verbose=True)
 
     before = before.GetValue()
     after = after.GetValue()
