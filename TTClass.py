@@ -367,13 +367,13 @@ class TTClass:
         self.ApplyStandardCorrections(snapshot=False)
         self.a.Define('Dijet_vect_trig','hardware::TLvector(Dijet_pt, Dijet_eta, Dijet_phi, Dijet_msoftdrop)')
         self.a.Define('Top1_vect_trig','hardware::TLvector(Dijet_pt[0], Dijet_eta[0], Dijet_phi[0], Dijet_msoftdrop[0])')
-#        self.a.Define('Photon1_vect_trig','hardware::TLvector(Diphoton_pt[0],Diphoton_eta[0], Diphoton_phi[0], Diphoton_mass[0])')
+        self.a.Define('Photon1_vect','hardware::TLvector(Diphoton_pt[0],Diphoton_eta[0], Diphoton_phi[0], Diphoton_mass[0])')
         self.a.Define('Photon1_vect_trig','hardware::TLvector(Apt0,Aeta0,Aphi0,Amass0)')
-#        self.a.Define('Photon2_vect_trig','hardware::TLvector(Diphoton_pt[1],Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
+        self.a.Define('Photon2_vect','hardware::TLvector(Diphoton_pt[1],Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
         self.a.Define('Photon2_vect_trig','hardware::TLvector(Apt1,Aeta1,Aphi1,Amass1)')
 #DP EDIT to be changed!!!!
         self.a.Define('Smass_trig','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
-        self.a.Define('mth_trig','hardware::InvariantMass({Top1_vect_trig,Photon1_vect_trig,Photon2_vect_trig})')
+        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
         self.a.Define('m_javg','(Dijet_msoftdrop[0]+Dijet_msoftdrop[1])/2')
 #        self.a.Define('Diph_mvaID','ConvertToVecF(AmvaID0,AmvaID1)')
         # JME variations
@@ -391,7 +391,15 @@ class TTClass:
 	# This is *not* a viable description of HT
 	# need to fix
 	#########################################################################################
+        self.a.Define('Top1_vect','hardware::TLvector(Dijet_pt_corr[0], Dijet_eta[0], Dijet_phi[0], Dijet_msoftdrop_corrT[0])')
+        self.a.Define('Top2_vect','hardware::TLvector(Dijet_pt_corr[1], Dijet_eta[1], Dijet_phi[1], Dijet_msoftdrop_corrT[1])')
+        self.a.Define('mth1','hardware::InvariantMass({Top1_vect,Photon1_vect,Photon2_vect})')
+        self.a.Define('mth2','hardware::InvariantMass({Top2_vect,Photon1_vect,Photon2_vect})')
+        self.a.Define('topchoice','int((Dijet_particleNet_TvsQCD[0]>-0.9) || (Dijet_particleNet_TvsQCD[1])<-0.9)')
+        self.a.Define('mth','topchoice*mth1+(1-topchoice)*mth2')
+#        self.a.Define('mth','mth1')
         # for trigger studies
+        self.a.Define('mth_trig','mth1')
         self.a.Define('pt0','Dijet_pt_corr[0]')
         self.a.Define('pt1','Dijet_pt_corr[1]')
         self.a.Define('HT','pt0+pt1')
@@ -426,16 +434,16 @@ class TTClass:
         # at this point, rename Dijet -> Top/Higgs based on its index determined above
 #        self.a.ObjectFromCollection('Top','Dijet','tIdx',skip=['msoftdrop_corrH'])
 #        self.a.ObjectFromCollection('Higgs','Dijet','hIdx',skip=['msoftdrop_corrT'])
-        self.a.ObjectFromCollection('Top','Dijet','tIdx0')
+#        self.a.ObjectFromCollection('Top','Dijet','tIdx0')
         self.a.ObjectFromCollection('Photon1','Diphoton','aIdx0')
         self.a.ObjectFromCollection('Photon2','Diphoton','aIdx1')
 
-        self.a.Define('Top_vect','hardware::TLvector(Top_pt_corr, Top_eta, Top_phi, Top_msoftdrop_corrT)')
+#        self.a.Define('Top_vect','hardware::TLvector(Top_pt_corr, Top_eta, Top_phi, Top_msoftdrop_corrT)')
 #        self.a.Define('Higgs_vect','hardware::TLvector(Higgs_pt_corr, Higgs_eta, Higgs_phi, Higgs_msoftdrop_corrH)')
-        self.a.Define('Photon1_vect','hardware::TLvector(Apt0, Aeta0, Aphi0, Amass0)')
-        self.a.Define('Photon2_vect','hardware::TLvector(Apt1, Aeta1, Aphi1, Amass1)')
-        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect,Photon2_vect})')
-        self.a.Define('mth','hardware::InvariantMass({Top_vect,Photon1_vect,Photon2_vect})')
+#        self.a.Define('Photon1_vect','hardware::TLvector(Apt0, Aeta0, Aphi0, Amass0)')
+#        self.a.Define('Photon2_vect','hardware::TLvector(Apt1, Aeta1, Aphi1, Amass1)')
+#        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect,Photon2_vect})')
+#        self.a.Define('mth','hardware::InvariantMass({Top_vect,Photon1_vect,Photon2_vect})')
         return self.a.GetActiveNode()	
 
 
@@ -580,7 +588,7 @@ class TTClass:
         self.a.SetActiveNode(checkpoint)
         return passLooseFail
 
-    def ApplySTagTopTag_Check(self, Stagger, StaggerWP, Toptagger, ToptaggerWP):
+    def ApplySTagTopTagCheck(self, Stagger, StaggerWP, Toptagger, ToptaggerWP):
         checkpoint = self.a.GetActiveNode()
         STPpassTest = {}
         STPpass = self.a.Cut('STagTopTagTestPass','(Diphoton_{0}[0] > {1}) && (Diphoton_{0}[1] > {1}) && (Dijet_{2}[0] > {3}) && (Dijet_{2}[1] > {3})'.format(Stagger, StaggerWP, Toptagger, ToptaggerWP))
@@ -589,6 +597,26 @@ class TTClass:
         # reset node state, return dict
         self.a.SetActiveNode(checkpoint)
         return STPpassTest
+
+    def ApplyPreSmassTPmassCheck(self, SmassWP,TPmassWP):
+        checkpoint = self.a.GetActiveNode()
+        SmassTPtrig = {}
+        SmassTP = self.a.Cut('SmassTP','Smass_trig > {0} && mth_trig > {1}'.format(SmassWP, TPmassWP))
+        self.SmassTPtrig = self.getNweighted()
+        self.AddCutflowColumn(self.SmassTPtrig,"SmassTPtrig")
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return SmassTPtrig
+
+    def ApplySmassTPmassCheck(self, SmassWP,TPmassWP):
+        checkpoint = self.a.GetActiveNode()
+        SmasspassTest = {}
+        Smasspass = self.a.Cut('SmassTestPass','Smass > {0} && mth > {1}'.format(SmassWP, TPmassWP))
+        self.SmasspassTest = self.getNweighted()
+        self.AddCutflowColumn(self.SmasspassTest,"SmasspassTest")
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return SmasspassTest
 
     def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
         '''
@@ -604,20 +632,20 @@ class TTClass:
         passFail = {}
         # Higgs Pass + cutflow info
         if (SRorCR == 'SR'):
-            passFail["pass"] = self.a.Cut('STag_pass','(Diphoton_{2}[0] > {3}) && (Diphoton_{2}[1] > {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["pass"] = self.a.Cut('STagSR_pass','(Diphoton_{2}[0] > {3}) && (Diphoton_{2}[1] > {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsP_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsP_SR, "higgsP_SR")
             self.a.SetActiveNode(checkpoint)
-            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["fail"] = self.a.Cut('STagSR_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsF_SR, "higgsF_SR")
         else:
-            passFail["pass"] = self.a.Cut('STag_pass','(Diphoton_{2}[0] > {3} && Diphoton_{2}[1] > {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["pass"] = self.a.Cut('STagCR_pass','(Diphoton_{2}[0] > {3} && Diphoton_{2}[1] > {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsP_CR = self.getNweighted()
             self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
         # Higgs Fail + cutflow info
             self.a.SetActiveNode(checkpoint)
-            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["fail"] = self.a.Cut('STagCR_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
 #            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
 #            passFail["fail"] = self.a.Cut('STag_fail','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_CR = self.getNweighted()

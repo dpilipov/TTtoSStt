@@ -54,7 +54,7 @@ def applyScaleFactors(analyzer, tagger, variation, SRorCR, PASSorFAIL, eff, wp):
     # instantiate Scale Factor class: {WPs}, {effs}, "year", variation
 #    CompileCpp('PNetXbbSFHandler p_%s = PNetXbbSFHandler({0.8,0.98}, {%f,%f}, "20%s", %i);'%(SRorCR, eff_loose, eff_tight, args.era, variation))
     tagger = 'Diphoton_' + tagger
-    CompileCpp('PNetSaaSFHandler p_%s_%s = PNetSaaSFHandler(-0.9, %f, "20%s", %i);'%(SRorCR, PASSorFAIL, eff, args.era, variation))
+    CompileCpp('PNetSaaSFHandler p_%s_%s = PNetSaaSFHandler(0, %f, "20%s", %i);'%(SRorCR, PASSorFAIL, eff, args.era, variation))
     # now create the column with original tagger category values (1: fail, 2: pass)
     analyzer.Define("OriginalTagCats","p_{}_{}.createTag({})".format(SRorCR, PASSorFAIL, tagger))
     # now create the column with *new* tagger categories, after applying logic. MUST feed in the original column (created in last step)
@@ -112,58 +112,69 @@ def TTselection(args):
 #            selection.cuts[t+'MD_HbbvsQCD'] = float(args.topcut)
 
             top_tagger = '%s_TvsQCD'%t
-            photon_tagger = 'mvaID'
+            photon_tagger = 'cutBased'
 
 	# SIGNAL
 # WE DO NOT NEED THIS....	if signal:
-            print('DOING THE SIGNAL TEST - PRE SF')
-            selection.a.SetActiveNode(kinOnly)
-            passTest = selection.ApplySTagTopTag_Check(photon_tagger, -0.8, top_tagger, 0.8)
+#            print('DOING THE SIGNAL TEST - PRE SF')
+#            selection.a.SetActiveNode(kinOnly)
+#            passTest = selection.ApplySTagTopTagCheck(photon_tagger, -0.9, top_tagger, 0.8)
+#            PreSmassTPmassTest = selection.ApplyPreSmassTPmassCheck(0.0,0.0)
 	    print('----------------------- CONTROL REGION --------------------------------------------------------------')
 	    # CONTROL REGION - ONE TOP REAL ONE NOT
 	    selection.a.SetActiveNode(kinOnly)
             e0CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='cr1')
             e1CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='cr2')
             #NEXT DEFINE THE TOPS AND THE PHOTONS
-            selection.ApplyTopPick_Signal(TopTagger='Dijet_'+top_tagger, PhotonTagger='Diphoton_'+photon_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, PhotonScoreCut=-0.9, eff0=e0CR, eff1=e1CR, year=args.era, TopVariation=TopVar)
+#            selection.ApplyTopPick_Signal(TopTagger='Dijet_'+top_tagger, PhotonTagger='Diphoton_'+photon_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, PhotonScoreCut=-0.9, eff0=e0CR, eff1=e1CR, year=args.era, TopVariation=TopVar)
+#            print('DOING THE MASS TEST')
+#            SmassTPmassTest = selection.ApplySmassTPmassCheck(0.0,0.0)
             # CONTROL REGION - ONE TOP REAL ONE NOT; PASS - BOTH REAL PHOTONS
 #            eff_CR_PASS = getSaaEfficiencies(selection.a, photon_tagger, 'CR', 'PASS', -0.9)
 #            applyScaleFactors(selection.a, photon_tagger, SaaVar, 'CR', 'PASS', eff_CR_PASS, -0.9)
             # CONTROL REGION - ONE TOP REAL ONE NOT; FAIL - ONLY ONE REAL PHOTON
 #            eff_CR_FAIL = getSaaEfficiencies(selection.a, photon_tagger, 'CR', 'FAIL', -0.9)
 #            applyScaleFactors(selection.a, photon_tagger, SaaVar, 'CR', 'FAIL', eff_CR_FAIL, -0.9)
-            passfailCR = selection.ApplySTagTopTag('CR', top_tagger, 0.8, photon_tagger, -0.9)
+            passfailCR = selection.ApplySTagTopTag('CR', top_tagger, 0.8, photon_tagger, 0)
 	    # SIGNAL REGION
             print('----------------------- SIGNAL REGION --------------------------------------------------------------')
             selection.a.SetActiveNode(kinOnly)
 #DP EDIT
-#            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.94, idx=0, tag='sr1')
-#            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.94, idx=1, tag='sr2')
+            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='sr1')
+            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='sr2')
 #            selection.ApplyTopPick_Signal(TopTagger='Dijet_'+top_tagger, XbbTagger='Dijet_'+higgs_tagger, pt='Dijet_pt_corr', TopScoreCut=0.94, eff0=e0SR, eff1=e1SR, year=args.era, TopVariation=TopVar, invert=False)
 #            eff_L_SR, eff_T_SR = getXbbEfficiencies(selection.a, higgs_tagger, 'SR', 0.8, 0.98)
 #            applyScaleFactors(selection.a, higgs_tagger, XbbVar, 'SR', eff_L_SR, eff_T_SR, 0.8, 0.95)
 #            passfailSR = selection.ApplyHiggsTag('SR', tagger=higgs_tagger, signal=signal)
-            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='sr1')
-            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='sr2')
+#            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='sr1')
+#            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='sr2')
 #            selection.ApplyTopPick_Signal(TopTagger='Dijet_'+top_tagger, PhotonTagger='Diphoton_'+photon_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, PhotonScoreCut=-0.9, eff0=e0SR, eff1=e1SR, year=args.era, TopVariation=TopVar)
 #            eff_SR_PASS = getSaaEfficiencies(selection.a, photon_tagger, 'SR', 'PASS', -0.9)
 #            applyScaleFactors(selection.a, photon_tagger, SaaVar, 'SR', 'PASS', eff_SR_PASS, -0.9)
 #            eff_SR_FAIL = getSaaEfficiencies(selection.a, photon_tagger, 'SR', 'FAIL', -0.9)
 #            applyScaleFactors(selection.a, photon_tagger, SaaVar, 'SR', 'FAIL', eff_SR_FAIL, -0.9)
-            passfailSR = selection.ApplySTagTopTag('SR', top_tagger, 0.8, photon_tagger, -0.9)
+            passfailSR = selection.ApplySTagTopTag('SR', top_tagger, 0.8, photon_tagger, 0)
 
 	# rkey: SR/CR, pfkey: pass/loose/fail
+ #           print('DOING THE MASS TEST')
+#            SmassTPmassTest = selection.ApplySmassTPmassCheck(0.0,0.0)
+
+            print('ABOUT TO PLOT....')
             for rkey,rpair in {"SR":passfailSR,"CR":passfailCR}.items():
               for pfkey,n in rpair.items():
-                mod_name = "%s_%s_%s"%(t,rkey,pfkey)
+                mod_name = "%s_%s_%s"%('TvsQCD_cutBased',rkey,pfkey)
+                print(mod_name)
                 mod_title = "%s %s"%(rkey,pfkey)
+                print(mod_title)
                 selection.a.SetActiveNode(n)
+#                SmassHist = ROOT.TH1F('Smass','Smass',40,60,1260)
 		# MakeTemplateHistos takes in the template histogram and then the variables which to plot in the form [x, y]
 		# in this case, 'Smass' is the x axis (S mass) and 'mth' is the y axis (T' mass = St mass)
 		# both of these variables were created/defined during the ApplyTopPick() and ApplyHiggsTag() steps above (see THClass)
-                templates = selection.a.MakeTemplateHistos(ROOT.TH2F('MthvMs_%s'%mod_name,'MthvMs %s with %s'%(mod_title,t),40,60,1260,22,800,3000),['Smass','mth'])
+                templates = selection.a.MakeTemplateHistos(ROOT.TH2F('MtpvMs_%s'%mod_name,'MtpvMs %s with %s'%(mod_title,'TvsQCD_cutBased'),20,0,800,20,600,2200),['Smass','mth'])
 #                templates = selection.a.MakeTemplateHistos(ROOT.TH1F('MthvMs_%s'%mod_name,'MthvMs %s with %s'%(mod_title,t),40,60,1260),['Smass'])
-#                templates.Do('Write')
+#                templates = selection.a.MakeTemplateHistos(SmassHist,['Smass'])
+                templates.Do('Write')
     '''
     # now process cutflow information
     cutflowInfo = OrderedDict([
