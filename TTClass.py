@@ -45,7 +45,8 @@ class TTClass:
         self.newTrigs = self.config['TRIGS']	
         self.trigs = {
 #DP EDIT
-	    16:['HLT_PFHT800','HLT_PFHT900'],
+#	    16:['HLT_PFHT800','HLT_PFHT900','HLT_Diphoton30EB_18EB_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55','HLT_Diphoton30PV_18PV_R9Id_AND_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55','HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelSeedMatch_Mass70','HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass90','HLT_Diphoton30_18_Solid_R9Id_AND_IsoCaloId_AND_HE_R9Id_Mass55','HLT_DoublePhoton60','HLT_DoublePhoton85'],
+            16:['HLT_PFHT800','HLT_PFHT900'],
             17:["HLT_PFHT1050","HLT_AK8PFJet500","HLT_AK8PFHT750_TrimMass50","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet400_TrimMass30"],
             19:['HLT_PFHT1050','HLT_AK8PFJet500'], # just use 19 for trigger script for 17b, 17all
             #18:["HLT_PFHT1050","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet500","HLT_AK8PFJet400_TrimMass30","HLT_AK8PFHT750_TrimMass50"]
@@ -328,6 +329,7 @@ class TTClass:
             'Diphoton_pt','Diphoton_eta','Diphoton_phi','Diphoton_mass',
             'Diphoton_mvaID','Diphoton_cutBased',
             'HLT_PFHT.*', 'HLT_PFJet.*', 'HLT_AK8.*', 'HLT_Mu50', 'HLT_IsoMu*', 'HLT_Ele27_WPTight_Gsf', 'HLT_Ele35_WPTight_Gsf',
+            'HLT_Diphoton*','HLT_DoublePhoton*',
             'event', 'eventWeight', 'luminosityBlock', 'run',
 	    'NPROC', 'NFLAGS', 'NJETS', 'NPHOTONS','NJETID', 'NPT', 'NAPT', 'NKIN', 
             'NPHOTONKIN','NDELTAETA','NPHOTONNOTELEC', 'NPHOTONINBARR',
@@ -372,6 +374,11 @@ class TTClass:
         self.a.Define('Photon2_vect','hardware::TLvector(Diphoton_pt[1],Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
         self.a.Define('Photon2_vect_trig','hardware::TLvector(Apt1,Aeta1,Aphi1,Amass1)')
 #DP EDIT to be changed!!!!
+        self.a.Define('PhotonEffSF','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,0)')
+        self.a.Define('PhotonEffSF1','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,1)')
+        self.a.Define('PhotonEffSF2','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,2)')
+        self.a.Define('DiPhotonCat','getDiPhotonCat(Diphoton_cutBased,1.0)')
+#        self.a.Define('DiPhotonCat','int(((Diphoton_cutBased[0] >= 1) && (Diphoton_cutBased[1] >= 1)))+(1-int(((Diphoton_cutBased[0] < 1) && (Diphoton_cutBased[1] < 1))))')
         self.a.Define('Smass_trig','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
         self.a.Define('Smass','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
         self.a.Define('m_javg','(Dijet_msoftdrop[0]+Dijet_msoftdrop[1])/2')
@@ -395,7 +402,7 @@ class TTClass:
         self.a.Define('Top2_vect','hardware::TLvector(Dijet_pt_corr[1], Dijet_eta[1], Dijet_phi[1], Dijet_msoftdrop_corrT[1])')
         self.a.Define('mth1','hardware::InvariantMass({Top1_vect,Photon1_vect,Photon2_vect})')
         self.a.Define('mth2','hardware::InvariantMass({Top2_vect,Photon1_vect,Photon2_vect})')
-        self.a.Define('topchoice','int((Dijet_particleNet_TvsQCD[0]>-0.9) || (Dijet_particleNet_TvsQCD[1])<-0.9)')
+        self.a.Define('topchoice','int((Dijet_particleNet_TvsQCD[0]>0.8) || (Dijet_particleNet_TvsQCD[1])<0.8)')
         self.a.Define('mth','topchoice*mth1+(1-topchoice)*mth2')
 #        self.a.Define('mth','mth1')
         # for trigger studies
@@ -405,14 +412,11 @@ class TTClass:
         self.a.Define('HT','pt0+pt1')
         return self.a.GetActiveNode()
 
-#DP EDIT add the photons, remove the XbbTagger
-#    def ApplyTopPick_Signal(self, TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, invert, ttbarCR=False):
-    def ApplyTopPick_Signal(self, TopTagger, PhotonTagger, pt, TopScoreCut, PhotonScoreCut, eff0, eff1, year, TopVariation):
+#DP EDIT consider the case of two tops
+    def ApplyTopPick_SR(self, TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation):
 	objIdxs = 'ObjIdxs_{}'.format(TopTagger)
 	if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
-#	    self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
            self.a.Define(objIdxs, 'PickTopWithSFs2(%s, %s, {0, 1}, %f, %f, %f, "20%s", %i)'%(TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation))
-	    # at this point, we'll have a column named ObjIdxs_(NOT)_particleNet_TvsQCD contianing the indices of which of the two jets is the top and the phi (top-0, Phi-1)
             # both jets checked to be tops: for CR need one top one not top
 	    # or, if neither passed it will look like {-1,-1}
 	   self.a.Define('tIdx0','{}[0]'.format(objIdxs))
@@ -420,35 +424,37 @@ class TTClass:
 	#DEBUG
 	nTot = self.a.DataFrame.Sum("genWeight").GetValue()
 	print('NTot before TopPick (signal) = {}'.format(nTot))
-        self.a.Cut('HasTop','tIdx0 > -1')
-        objAIdxs = 'ObjAIdxs_{}'.format(PhotonTagger)
-        if objAIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
-#           self.a.Define(objIdxs, 'PickTopWithSFs(%s, %s, %s, {0, 1}, %f, %f, %f, "20%s", %i, %s)'%(TopTagger, XbbTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation, 'true' if invert else 'false'))
-#           self.a.Define(objAIdxs, 'PickTagF( %s, {0, 1}, %f)'%(TopTagger, TopScoreCut))
-           self.a.Define(objAIdxs, 'PickTagF(%s, {0, 1}, %f)'%(PhotonTagger, PhotonScoreCut))
-           self.a.Define('aIdx0','{}[0]'.format(objAIdxs))
-           self.a.Define('aIdx1','{}[1]'.format(objAIdxs))
-        #DEBUG
-        nTot = self.a.DataFrame.Sum("genWeight").GetValue()
-        print('NTot after PhotonPick (signal) = {}'.format(nTot))
-        # at this point, rename Dijet -> Top/Higgs based on its index determined above
-#        self.a.ObjectFromCollection('Top','Dijet','tIdx',skip=['msoftdrop_corrH'])
-#        self.a.ObjectFromCollection('Higgs','Dijet','hIdx',skip=['msoftdrop_corrT'])
-#        self.a.ObjectFromCollection('Top','Dijet','tIdx0')
-        self.a.ObjectFromCollection('Photon1','Diphoton','aIdx0')
-        self.a.ObjectFromCollection('Photon2','Diphoton','aIdx1')
-
-#        self.a.Define('Top_vect','hardware::TLvector(Top_pt_corr, Top_eta, Top_phi, Top_msoftdrop_corrT)')
-#        self.a.Define('Higgs_vect','hardware::TLvector(Higgs_pt_corr, Higgs_eta, Higgs_phi, Higgs_msoftdrop_corrH)')
-#        self.a.Define('Photon1_vect','hardware::TLvector(Apt0, Aeta0, Aphi0, Amass0)')
-#        self.a.Define('Photon2_vect','hardware::TLvector(Apt1, Aeta1, Aphi1, Amass1)')
-#        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect,Photon2_vect})')
-#        self.a.Define('mth','hardware::InvariantMass({Top_vect,Photon1_vect,Photon2_vect})')
+        self.a.Cut('HasTop','(tIdx0 > -1) || (tIdx1 > -1)')
         return self.a.GetActiveNode()	
 
+    def ApplyTopPick_CR(self, TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation):
+        objIdxsCR = 'ObjIdxsCR_{}'.format(TopTagger)
+        if objIdxsCR not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
+           self.a.Define(objIdxsCR, 'PickTopWithSFs2(%s, %s, {0, 1}, %f, %f, %f, "20%s", %i)'%(TopTagger, pt, TopScoreCut, eff0, eff1, year, TopVariation))
+            # both jets checked to be tops: for CR need one top one not top
+            # or, if neither passed it will look like {-1,-1}
+           self.a.Define('tIdx0CR','{}[0]'.format(objIdxsCR))
+           self.a.Define('tIdx1CR','{}[1]'.format(objIdxsCR))
+        #DEBUG
+        nTot = self.a.DataFrame.Sum("genWeight").GetValue()
+        print('NTot before TopPick (signal) = {}'.format(nTot))
+        self.a.Cut('HasTopCR','(tIdx0CR > -1) || (tIdx1CR > -1)')
+        return self.a.GetActiveNode()
 
-#DP EDIT: change to particleNet; keep both tops, include photons
-#    def ApplyTopPick(self,tagger='deepTag_TvsQCD',invert=False, CRv2=None, ttbarCR=False):
+    def ApplyPhotonPick(self, PhotonTagger, pt, eta, PhotonScoreCut, effP, effF, year, PhotonVariation):
+        objIdxs = 'ObjIdxs_{}'.format(PhotonTagger)
+        if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
+           self.a.Define(objAIdxs, 'PickPhotonsWithSFs(%s, %s, {0, 1}, %f, %f, %f, "20%s", %i)'%(PhotonTagger, pt, eta, PhotonScoreCut, effP, effF, year, PhotonVariation))
+            # both jets checked to be tops: for CR need one top one not top
+            # or, if neither passed it will look like {-1,-1}
+           self.a.Define('tAIdx0','{}[0]'.format(objAIdxs))
+           self.a.Define('tAIdx1','{}[1]'.format(objAIdxs))
+        #DEBUG
+        nTot = self.a.DataFrame.Sum("genWeight").GetValue()
+        print('NTot before PhotonPick (signal) = {}'.format(nTot))
+        self.a.Cut('HasPhotons','(tIdx0 > -1) || (tIdx1 > -1)')
+        return self.a.GetActiveNode()
+
     def ApplyTopPick(self,tagger='particleNet__TvsQCD',invert=False, CRv2=None, ttbarCR=False):
         objIdxs = 'ObjIdxs%s_%s%s'%('_ttbarCR' if ttbarCR else '','Not' if invert else '',tagger)
         if objIdxs not in [str(cname) for cname in self.a.DataFrame.GetColumnNames()]:
@@ -618,38 +624,150 @@ class TTClass:
         self.a.SetActiveNode(checkpoint)
         return SmasspassTest
 
-    def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
-        '''
-            SRorCR [str] = "SR" or "CR" - used to generate cutflow information after each Higgs tagger cut
-            tagger [str] = discriminator used for Higgs ID. default: particleNetMD_HbbvsQCD
-                NOTE: The ApplyTopPick() function will create a column with the name Higgs_particleNetMD_HbbvsQCD, so we have to select for that below
-            signal [bool] = whether signal or not. If signal, then perform Higgs tag based on columns created after SF application:
-                Pass:   NewTagCats==1           # see ParticleNet_SF.cc and THselection.py for more information
-                Fail:   NewTagCats==0
-        '''
+    def ApplySTagTopTagSF(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
         assert(SRorCR == 'SR' or SRorCR == 'CR')
         checkpoint = self.a.GetActiveNode()
-        passFail = {}
+        nTotOrig = self.getNweighted()
+        print("nTotOrig = {}".format(nTotOrig))
+        nTotSF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+        print("nTotSF = {}".format(nTotSF))
+        passFailSF = {}
         # Higgs Pass + cutflow info
         if (SRorCR == 'SR'):
-            passFail["pass"] = self.a.Cut('STagSR_pass','(Diphoton_{2}[0] > {3}) && (Diphoton_{2}[1] > {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            totSR_SF = self.a.Cut('STagSR_SF','(Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgs_SR_SF = self.getNweighted()
+            self.eventSumSR_SF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            self.AddCutflowColumn(self.higgs_SR_SF, "higgs_SR_SF")
+            print('Obtaining efficiencies for SR_SF')
+            eff = self.higgs_SR_SF/nTotOrig
+            print('SR: eff = {}'.format(eff*100.))
+            effSF = self.eventSumSR_SF/nTotSF
+            print('SR: effSF = {}'.format(effSF*100))
+#            passFailSF["pass"] = self.a.Cut('STagSR_pass_SF','(Diphoton_{2}[0] >= {3}) && (Diphoton_{2}[1] >= {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["pass"] = self.a.Cut('STagSR_pass_SF','(DiPhotonCatSF == 2) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgsP_SR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_SR_SF, "higgsP_SR_SF")
+            effpass = self.higgsP_SR_SF/nTotOrig
+            print('SR: effpass = {}'.format(effpass*100))
+            self.eventSumSRpass_SF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFpass = self.eventSumSRpass_SF/nTotSF
+            print('SR: effSFpass = {}'.format(effSFpass*100))
+#            self.a.Define('passFailSF','hardware::MultiHadamardProduct(%s,PhotonEffSF)'%passFail)
+#            effnorm = effSFpass/effpass
+            self.a.SetActiveNode(checkpoint)
+#            passFailSF["fail"] = self.a.Cut('STagSR_fail_SF','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["fail"] = self.a.Cut('STagSR_fail_SF','(DiPhotonCatSF == 1) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgsF_SR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_SR_SF, "higgsF_SR_SF")
+            efffail = self.higgsF_SR_SF/nTotOrig
+            print('SR: efffail = {}'.format(efffail*100))
+            self.eventSumSRfail_SF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfail = self.eventSumSRfail_SF/nTotSF
+            print('SR: effSFfail = {}'.format(effSFfail*100))
+            self.a.SetActiveNode(checkpoint)
+#            passFailSF["failfail"] = self.a.Cut('STagSR_failfail_SF','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["failfail"] = self.a.Cut('STagSR_failfail_SF','(DiPhotonCatSF == 0) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgsFF_SR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_SR_SF, "higgsFF_SR_SF")
+            efffailfail = self.higgsFF_SR_SF/nTotOrig
+            print('SR: efffailfail = {}'.format(efffailfail*100))
+            self.eventSumSRfailfail_SF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfailfail = self.eventSumSRfailfail_SF/nTotSF
+            print('SR: effSFfail fail = {}'.format(effSFfailfail*100))
+        else:
+            totCR_SF = self.a.Cut('STagCR_SF','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgs_CR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgs_CR_SF, "higgs_CR_SF")
+            print('Obtaining efficiencies for CR_SF')
+            eff = self.higgs_CR_SF/nTotOrig
+            print('CR: eff = {}'.format(eff*100.))
+#            passFailSF["pass"] = self.a.Cut('STagCR_pass_SF','(Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] >= {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["pass"] = self.a.Cut('STagCR_pass_SF','(DiPhotonCatCRSF == 2) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgsP_CR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_CR_SF, "higgsP_CR_SF")
+        # Higgs Fail + cutflow info
+            self.a.SetActiveNode(checkpoint)
+#            passFailSF["fail"] = self.a.Cut('STagCR_fail_SF','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["fail"] = self.a.Cut('STagCR_fail_SF','(DiPhotonCatCRSF == 1) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgsF_CR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_CR_SF, "higgsF_CR_SF")
+            self.a.SetActiveNode(checkpoint)
+#            passFailSF["failfail"] = self.a.Cut('STagCR_failfail_SF','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFailSF["failfail"] = self.a.Cut('STagCR_failfail_SF','(DiPhotonCatCRSF == 0) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgsFF_CR_SF = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_CR_SF, "higgsFF_CR_SF")
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return passFailSF
+
+
+    def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
+        assert(SRorCR == 'SR' or SRorCR == 'CR')
+        checkpoint = self.a.GetActiveNode()
+        nTotOrig = self.getNweighted()
+        print("nTotOrig = {}".format(nTotOrig))
+        nTotSF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+        print("nTotSF = {}".format(nTotSF))
+        passFail = {}
+        passFailSF = {}
+        # Higgs Pass + cutflow info
+        if (SRorCR == 'SR'):
+            totSR = self.a.Cut('STagSR','(Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgs_SR = self.getNweighted()
+            self.eventSumSR = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            self.AddCutflowColumn(self.higgs_SR, "higgs_SR")
+            print('Obtaining efficiencies for SR')
+            eff = self.higgs_SR/nTotOrig
+            print('SR: eff = {}'.format(eff*100.))
+            effSF = self.eventSumSR/nTotSF
+            print('SR: effSF = {}'.format(effSF*100))
+            passFail["pass"] = self.a.Cut('STagSR_pass','(Diphoton_{2}[0] >= {3}) && (Diphoton_{2}[1] >= {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsP_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsP_SR, "higgsP_SR")
+            effpass = self.higgsP_SR/nTotOrig
+            print('SR: effpass = {}'.format(effpass*100))
+            self.eventSumSRpass = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFpass = self.eventSumSRpass/nTotSF
+            print('SR: effSFpass = {}'.format(effSFpass*100))
+#            self.a.Define('passFailSF','hardware::MultiHadamardProduct(%s,PhotonEffSF)'%passFail)
+#            effnorm = effSFpass/effpass
             self.a.SetActiveNode(checkpoint)
-            passFail["fail"] = self.a.Cut('STagSR_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["fail"] = self.a.Cut('STagSR_fail','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_SR = self.getNweighted()
             self.AddCutflowColumn(self.higgsF_SR, "higgsF_SR")
+            efffail = self.higgsF_SR/nTotOrig
+            print('SR: efffail = {}'.format(efffail*100))
+            self.eventSumSRfail = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfail = self.eventSumSRfail/nTotSF
+            print('SR: effSFfail = {}'.format(effSFfail*100))
+            self.a.SetActiveNode(checkpoint)
+            passFail["failfail"] = self.a.Cut('STagSR_failfail','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsFF_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_SR, "higgsFF_SR")
+            efffailfail = self.higgsFF_SR/nTotOrig
+            print('SR: efffailfail = {}'.format(efffailfail*100))
+            self.eventSumSRfailfail = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfailfail = self.eventSumSRfailfail/nTotSF
+            print('SR: effSFfail fail = {}'.format(effSFfailfail*100))
         else:
-            passFail["pass"] = self.a.Cut('STagCR_pass','(Diphoton_{2}[0] > {3} && Diphoton_{2}[1] > {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            totCR = self.a.Cut('STagCR','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgs_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgs_CR, "higgs_CR")
+            print('Obtaining efficiencies for CR')
+            eff = self.higgs_CR/nTotOrig
+            print('CR: eff = {}'.format(eff*100.))
+            passFail["pass"] = self.a.Cut('STagCR_pass','(Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] >= {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsP_CR = self.getNweighted()
             self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
         # Higgs Fail + cutflow info
             self.a.SetActiveNode(checkpoint)
-            passFail["fail"] = self.a.Cut('STagCR_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
-#            passFail["fail"] = self.a.Cut('STag_fail','((Diphoton_{2}[0] > {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] > {3} && Diphoton_{2}[0] < {3}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
-#            passFail["fail"] = self.a.Cut('STag_fail','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            passFail["fail"] = self.a.Cut('STagCR_fail','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
             self.higgsF_CR = self.getNweighted()
             self.AddCutflowColumn(self.higgsF_CR, "higgsF_CR")
+            self.a.SetActiveNode(checkpoint)
+            passFail["failfail"] = self.a.Cut('STagCR_failfail','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsFF_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_CR, "higgsFF_CR")
         # reset node state, return dict
         self.a.SetActiveNode(checkpoint)
         return passFail

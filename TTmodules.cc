@@ -92,6 +92,8 @@ float getSF(int jetCat, float pt, std::string _year, int _var) {
     float SF2018_L[3][4]    = {{1.19,0.98,0.96,0.97},{1.31,1.02,1.00,1.02},{1.07,0.94,0.93,0.92}};
     // begin logic
     float SF;
+    float SF1;
+    float SF2;
     int ptCat;
     // get the pT category
 // DP EDIT - the commented out line...
@@ -122,6 +124,167 @@ float getSF(int jetCat, float pt, std::string _year, int _var) {
     return SF;
 }
 
+int getDiPhotonCat(RVec<float> taggerVal, float taggerWP) {
+    int wpCat;
+    if ((taggerVal[0] >= taggerWP) && (taggerVal[1] >= taggerWP)) {
+       wpCat = 2;
+    } else if ((taggerVal[0] < taggerWP) && (taggerVal[1] < taggerWP)) {
+       wpCat = 0;
+    } else {
+       wpCat = 1;
+    }
+//std::cout << "DiPhoton Cat " << taggerVal[0] << " " << taggerVal[1] << " " << wpCat << std::endl;
+    return wpCat;
+}
+
+float getPhotonSF(RVec<float> pt, RVec<float> eta, RVec<float> taggerVal, float taggerWP, int ichoice) {
+    int wpCat;
+    int wpCat1 = int(taggerVal[0]);
+    int wpCat2 = int(taggerVal[1]);
+    int ptCat1=0;
+    int ptCat2=0;
+    int etaCat1=0;
+    int etaCat2=0;
+    float SF;
+    float SF1;
+    float SF2;
+//    float SF2016APV_T[10][5] = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+    float SF2016_T[10][5]    = {{1.045918345451355,1.0369843244552612,1.0328317880630493,1.022757649421692,1.0284552574157715},{0.9825396537780762,0.9904502034187317,0.9920424222946167,1.0052909851074219,1.0647886991500854},{1.041338562965393,1.015455961227417,1.0125983953475952,1.0856643915176392,1.0301003456115723},{1.0032051801681519,0.9972106218338013,0.9917582273483276,1.0233516693115234,1.0361111164093018},{0.9817578792572021,0.9759206771850586,0.9681440591812134,1.0055943727493286,1.0070126056671143},{0.9884488582611084,0.9816384315490723,0.969613254070282,0.9986013770103455,1.0166898965835571},{1.0097087621688843,0.9985975027084351,0.9944751262664795,1.025174856185913,1.026063084602356},{0.9778671860694885,1.007836937904358,0.9842767119407654,0.975944995880127,1.0263158082962036},{0.9760383367538452,0.9904109835624695,0.9826666712760925,1.0405954122543335,1.0272108316421509},{1.0439189672470093,1.0339462757110596,1.028493881225586,1.061662197113037,1.058432936668396}};
+//    float SF2017_T[10][5]    = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+//    float SF2018_T[10][5]    = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+//        float SF2016APV_M[10][5] = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+    float SF2016_M[10][5]    = {{1.0384024381637573,1.0325098037719727,1.0225000381469727,1.0295202732086182,1.0183823108673096},{0.9677419066429138,0.9853300452232361,0.9892473220825195,0.9869513511657715,1.028678297996521},{1.052901029586792,1.0067843198776245,1.0013889074325562,0.9956011772155762,1.0119940042495728},{1.0,0.9914634227752686,0.9890776872634888,1.0245699882507324,1.0260869264602661},{0.9548022747039795,0.9740419983863831,0.9670329689979553,1.0037267208099365,1.0162907838821411},{0.9831223487854004,0.9802225232124329,0.9694749712944031,0.9975185990333557,1.009987473487854},{0.9986187815666199,0.9926560521125793,0.9878345727920532,1.018587350845337,1.0270936489105225},{1.0260416269302368,1.0027472972869873,0.9707520604133606,1.0252366065979004,1.0160771608352661},{0.9731638431549072,0.9852941036224365,0.9844311475753784,1.0365407466888428,1.0182703733444214},{1.0428789854049683,1.0284605026245117,1.0124223232269287,1.0602705478668213,1.0550122261047363}};
+//    float SF2017_M[10][5]    = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+//    float SF2018_M[10][5]    = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+//    float SF2016APV_L[10][5] = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+    float SF2016_L[10][5]    = {{1.0037453174591064,1.0,0.9967776536941528,1.006355881690979,0.9851064085960388},{0.9605911374092102,0.969264566898346,0.9806034564971924,0.9892473220825195,1.0344061851501465},{1.035433053970337,0.9954954981803894, 0.9909604787826538, 1.0199296474456787,0.9351415038108826,},{0.9953106641769409,0.9913138151168823,0.9825897812843323,1.0178173780441284,0.9988725781440735},{0.989195704460144,0.9824753403663635,0.9769737124443054,1.0066889524459839,0.994356632232666},{0.9856114983558655,0.9835526347160339,0.9769483804702759,1.0033669471740723,1.0158730745315552},{0.9952940940856934,0.990217387676239,0.984749436378479,1.0066889524459839,1.0135135650634766},{0.9880319237709045,0.9966063499450684,0.9897843599319458,1.0023781061172485,1.0236612558364868},{0.9628252983093262,0.9790979027748108,0.982758641242981,1.0129870176315308,0.9967355728149414},{0.99622642993927,0.9934065937995911,0.9967880249023438,1.022459864616394,1.0201913118362427}};
+//    float SF2017_L[10][5] = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+//    float SF2018_L[10][5] = {{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0},{1.0,1.0,1.0,1.0,1.0}};
+    //
+    if ((taggerVal[0] >= taggerWP) && (taggerVal[1] >= taggerWP)) {
+       wpCat = 2;
+    } else if ((taggerVal[0] < taggerWP) && (taggerVal[1] < taggerWP)) {
+       wpCat = 0;
+    } else {
+       wpCat = 1;
+    }
+      if (eta[0] >= 2.0) {
+    etaCat1 = 9;
+  } else if ((eta[0] >= 1.566) && (eta[0] < 2.0)) {
+    etaCat1 = 8;
+  } else if ((eta[0] >= 1.444) && (eta[0] < 1.566)) {
+    etaCat1 = 7;
+  } else if ((eta[0] >= 0.8) && (eta[0] < 1.444)) {
+    etaCat1 = 6;
+  } else if ((eta[0] >= 0.0) && (eta[0] < 0.8)) {
+    etaCat1 = 5;
+  } else if ((eta[0] >= -0.8) && (eta[0] < 0.0)) {
+    etaCat1 = 4;
+  } else if ((eta[0] >= -1.444) && (eta[0] < -0.8)) {
+    etaCat1 = 3;
+  } else if ((eta[0] >= -1.566) && (eta[0] < -1.444)) {
+    etaCat1 = 2;
+  } else if ((eta[0] >= -2.0) && (eta[0] < -1.566)) {
+    etaCat1 = 1;
+  } else {
+    etaCat1 = 0;
+  }
+  if (eta[1] >= 2.0) {
+    etaCat2 = 9;
+  } else if ((eta[1] >= 1.566) && (eta[1] < 2.0)) {
+    etaCat2 = 8;
+  } else if ((eta[1] >= 1.444) && (eta[1] < 1.566)) {
+    etaCat2 = 7;
+  } else if ((eta[1] >= 0.8) && (eta[1] < 1.444)) {
+    etaCat2 = 6;
+  } else if ((eta[1] >= 0.0) && (eta[1] < 0.8)) {
+    etaCat2 = 5;
+  } else if ((eta[1] >= -0.8) && (eta[1] < 0.0)) {
+    etaCat2 = 4;
+  } else if ((eta[1] >= -1.444) && (eta[1] < -0.8)) {
+    etaCat2 = 3;
+  } else if ((eta[1] >= -1.566) && (eta[1] < -1.444)) {
+    etaCat2 = 2;
+  } else if ((eta[1] >= -2.0) && (eta[1] < -1.566)) {
+    etaCat2 = 1;
+  } else {
+    etaCat2 = 0;
+  }
+  if (pt[0] >= 120.0) {
+    ptCat1 = 4;
+  } else if ((pt[0] >= 80.0) && (pt[0] < 120.0)) {
+    ptCat1 = 3;
+  } else if ((pt[0] >= 50.0) && (pt[0] < 80.0)) {
+    ptCat1 = 2;
+  } else if ((pt[0] >= 35.0) && (pt[0] < 50.0)) {
+    ptCat1 = 1;
+  } else {
+    ptCat1 = 0;
+  }
+  if (pt[1] >= 120.0) {
+    ptCat2 = 4;
+  } else if ((pt[1] >= 80.0) && (pt[1] < 120.0)) {
+    ptCat2 = 3;
+  } else if ((pt[1] >= 50.0) && (pt[1] < 80.0)) {
+    ptCat2 = 2;
+  } else if ((pt[1] >= 35.0) && (pt[1] < 50.0)) {
+    ptCat2 = 1;
+  } else {
+    ptCat2 = 0;
+  }
+
+
+  switch (wpCat1) {
+    case 0: 
+      SF1 = 1.0;
+    case 1: 
+      SF1 = SF2016_L[etaCat1][ptCat1];
+//      if (year=="2016APV") { SF1 = SF2016APV_L[etaCat1][ptCat1]; }
+//      else if (year=="2016") { SF1 = SF2016_L[etaCat1][ptCat1]; }
+//      else if (year=="2017") { SF1 = SF2017_L[etaCat1][ptCat1]; }
+//      else { SF1 = SF2018_L[etaCat1][ptCat1]; }
+    case 2:
+      SF1 = SF2016_M[etaCat1][ptCat1];
+//      if (year=="2016APV") { SF1 = SF2016APV_M[etaCat1][ptCat1]; }
+//      else if (year=="2016") { SF1 = SF2016_M[etaCat1][ptCat1]; }
+//      else if (year=="2017") { SF1 = SF2017_M[etaCat1][ptCat1]; }
+//      else { SF1 = SF2018_M[etaCat1][ptCat1]; }
+    case 3:
+      SF1 = SF2016_T[etaCat1][ptCat1];
+//      if (year=="2016APV") { SF1 = SF2016APV_T[etaCat1][ptCat1]; }
+//      else if (year=="2016") { SF1 = SF2016_T[etaCat1][ptCat1]; }
+//      else if (year=="2017") { SF1 = SF2017_T[etaCat1][ptCat1]; }
+//      else { SF1 = SF2018_T[etaCat1][ptCat1]; }
+  }
+  switch (wpCat2) {
+    case 0:
+      SF2 = 1.0;
+    case 1: 
+      SF2 = SF2016_L[etaCat2][ptCat2];
+//      if (year=="2016APV") { SF2 = SF2016APV_L[etaCat2][ptCat2]; }
+//      else if (year=="2016") { SF2 = SF2016_L[etaCat2][ptCat2]; }
+//      else if (year=="2017") { SF2 = SF2017_L[etaCat2][ptCat2]; }
+//      else { SF2 = SF2018_L[etaCat2][ptCat2]; }
+    case 2:
+        SF2 = SF2016_M[etaCat2][ptCat2];
+//      if (year=="2016APV") { SF2 = SF2016APV_M[etaCat2][ptCat2]; }
+//      else if (year=="2016") { SF2 = SF2016_M[etaCat2][ptCat2]; }
+//      else if (year=="2017") { SF2 = SF2017_M[etaCat2][ptCat2]; }
+//      else { SF2 = SF2018_M[etaCat2][ptCat2]; }
+    case 3:
+        SF2 = SF2016_T[etaCat2][ptCat2];
+//      if (year=="2016APV") { SF2 = SF2016APV_T[etaCat2][ptCat2]; }
+//      else if (year=="2016") { SF2 = SF2016_T[etaCat2][ptCat2]; }
+//      else if (year=="2017") { SF2 = SF2017_T[etaCat2][ptCat2]; }
+//      else { SF2 = SF2018_T[etaCat2][ptCat2]; }
+  }
+  SF = SF1 * SF2;
+//std::cout << "SF1 SF2 SF " << SF1 << " " <<SF2 << " " << SF << std::endl;
+  if (ichoice == 1) SF = SF1;
+  if (ichoice == 2) SF = SF2;
+  return SF;
+};
+
 int getOriginalTopCat(float TvsQCD, float WP) {
     if (TvsQCD > WP) {return 1;}    // pass
     else {return 0;}                // fail
@@ -149,6 +312,75 @@ int getNewTopCat(float SF, int oldCat, float eff, double rand, bool invert) {
     //delete random;
     return newCat;
 };
+
+int updatePhotonTag(int photonCat, RVec<float> pt, RVec<float> eta, RVec<int> taggerVal, float taggerWP, float effP, float effF) {
+    /* updates the tagger category for phi jets
+ *      * https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods#2a_Jet_by_jet_updating_of_the_b
+ *           * Params:
+ *                *   photonCat    = original photon category (0: failfail, 1: fail, 2: pass)
+ *                     *   pt        = jet pt
+ *                          *   taggerVal = particleNet tagger value
+ *                              */
+    float SF;// = getPhotonSF(pt, eta, taggerVal, taggerWP, 0);
+    float SF1;// = getPhotonSF(pt, eta, taggerVal, taggerWP, 1);
+    float SF2;// = getPhotonSF(pt, eta, taggerVal, taggerWP, 2);
+    float SF_P;
+    float SF_F;
+    float eff_P = effP;
+    float eff_F = effF;
+    double rn = RAND();
+    int newCat = photonCat;
+    std::vector<float> TagVP(2);
+    TagVP[1] = 1.0;
+    TagVP[2]=1.0;
+    SF = getPhotonSF(pt, eta, taggerVal, taggerWP, 0);
+    SF1 = getPhotonSF(pt, eta, taggerVal, taggerWP, 1);
+    SF2 = getPhotonSF(pt, eta, taggerVal, taggerWP, 2);
+    SF_P = getPhotonSF(pt, eta, TagVP, taggerWP, 0);
+    TagVP[2]=0.0;
+    SF_F = getPhotonSF(pt, eta, TagVP, taggerWP, 0);    
+    if ((SF_P < 1) && (SF_F < 1)) {
+        if ( (newCat==2) && (rn < (1.-SF_P)) ) newCat=0;        // tight (2) -> untag (0)
+        if ( (newCat==1) && (rn < (1.-SF_F)) ) newCat=0;        // loose (1) -> untag (0)
+    }
+    if ((SF_P > 1) && (SF_F > 1)) {
+        float fF, fP;
+        if (newCat==0) {
+            float num = eff_P*(SF_P-1.);
+            float den = 1.-(eff_F+eff_P);
+            fP = num/den;
+            if (rn < fP) newCat=2;      // untag (0) -> tight (2)
+            else {
+                rn = RAND();
+                num = eff_F*(SF_F-1.);
+                den = (1.-eff_F-eff_P)*(1.-fP);
+                fF = num/den;
+                if (rn < fF) newCat=1;  // loose (1) -> tight (2)
+            }
+        }
+    }
+    if ((SF_F < 1) && (SF_P > 1)) {
+        if (newCat==0) {
+            float num = eff_P*(SF_P-1.);
+            float den = 1.-(eff_F+eff_P);
+            float f = num/den;
+            if (rn < f) newCat=2;           // untag (0) -> tight (2)
+        }
+        if (newCat==1) {
+            if (rn < (1.-SF_F)) newCat=0;   // loose (1) -> untag (0)
+        }
+    }
+    if ((SF_F > 1) && (SF_P < 1)) {
+        if ((newCat==2) && (rn < (1.-SF_P))) newCat=0;  // tight (2) -> untag (0)
+        if (newCat==0) {
+            float num = eff_F*(SF_F-1.);
+            float den = 1.-(eff_F+eff_P);
+            float f = num/den;
+            if (rn < f) newCat=1;       // untag (0) -> loose (1)
+        }
+    }
+    return newCat;
+}
 
 RVec<int> PickTopWithSFs2(RVec<float> TvsQCD,
                   RVec<float> pt,
@@ -180,6 +412,7 @@ RVec<int> PickTopWithSFs2(RVec<float> TvsQCD,
     int new_score1 = getNewTopCat(SF1, orig_score1, eff1, rand1, invertScore);
     isTop0 = (new_score0 == 1);
     isTop1 = (new_score1 == 1);
+    if (invertScore) {
     if (isTop0 && isTop1) {
         out[0] = idx0;
         out[1] = idx1;
@@ -192,7 +425,7 @@ RVec<int> PickTopWithSFs2(RVec<float> TvsQCD,
     } else {
         out[0] = -1;
         out[1] = -1;
-    }
+    }}
     return out;
 }
 

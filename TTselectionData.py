@@ -141,32 +141,32 @@ def TTselection(args):
 	    print('----------------------- CONTROL REGION --------------------------------------------------------------')
 	    # CONTROL REGION - ONE TOP REAL ONE NOT
 	    selection.a.SetActiveNode(kinOnly)
-            e0CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='cr1')
-            e1CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='cr2')
-            selection.ApplyTopPick_CR(TopTagger='Dijet_'+top_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, eff0=e0CR, eff1=e1CR, year=args.era, TopVariation=TopVar)
+#            e0CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='cr1')
+#            e1CR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='cr2')
+#            selection.ApplyTopPick_CR(TopTagger='Dijet_'+top_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, eff0=e0CR, eff1=e1CR, year=args.era, TopVariation=TopVar)
             eff_CR_PASS, eff_CR_FAIL, eff_CR_FAILFAIL = getSaaEfficiencies(selection.a, 'CR', top_tagger, 0.8, photon_tagger, 1)
 #            eA0CR = getPhotonEfficiencies(analyzer=selection.a, tagger='Diphoton_'+photon_tagger+'[0]', wp=1, idx=0, tag='cr1')
 #            eA1CR = getPhotonEfficiencies(analyzer=selection.a, tagger='Diphoton_'+photon_tagger+'[1]', wp=1, idx=1, tag='cr2')
-            selection.a.Define('DiPhotonCatCRSF','updatePhotonTag(DiPhotonCat,Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,{0},{1})'.format(eff_CR_PASS, eff_CR_FAIL))
-#            passfailCR = selection.ApplySTagTopTag('CR', top_tagger, 0.8, photon_tagger, 1)
-            passfailCR_SF = selection.ApplySTagTopTagSF('CR', top_tagger, 0.8, photon_tagger, 1)
+#            selection.a.Define('DiPhotonCatCRSF','updatePhotonTag(DiPhotonCat,Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,{0},{1})'.format(eff_CR_PASS, eff_CR_FAIL))
+            passfailCR = selection.ApplySTagTopTag('CR', top_tagger, 0.8, photon_tagger, 1)
+#            passfailCR_SF = selection.ApplySTagTopTagSF('CR', top_tagger, 0.8, photon_tagger, 1)
 	    # SIGNAL REGION
             print('----------------------- SIGNAL REGION --------------------------------------------------------------')
             selection.a.SetActiveNode(kinOnly)
 #DP EDIT
-            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='sr1')
-            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='sr2')
-            selection.ApplyTopPick_SR(TopTagger='Dijet_'+top_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, eff0=e0SR, eff1=e1SR, year=args.era, TopVariation=TopVar)
+#            e0SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[0]', wp=0.8, idx=0, tag='sr1')
+#            e1SR = getTopEfficiencies(analyzer=selection.a, tagger='Dijet_'+top_tagger+'[1]', wp=0.8, idx=1, tag='sr2')
+#            selection.ApplyTopPick_SR(TopTagger='Dijet_'+top_tagger, pt='Dijet_pt_corr', TopScoreCut=0.8, eff0=e0SR, eff1=e1SR, year=args.era, TopVariation=TopVar)
             eff_SR_PASS, eff_SR_FAIL, eff_SR_FAILFAIL = getSaaEfficiencies(selection.a, 'SR', top_tagger, 0.8, photon_tagger, 1)
 #            eA0SR = getPhotonEfficiencies(analyzer=selection.a, tagger='Diphoton_'+photon_tagger+'[0]', wp=1, idx=0, tag='sr1')
 #            eA1SR = getPhotonEfficiencies(analyzer=selection.a, tagger='Diphoton_'+photon_tagger+'[1]', wp=1, idx=1, tag='sr2')
-            selection.a.Define('DiPhotonCatSF','updatePhotonTag(DiPhotonCat,Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,{0},{1})'.format(eff_SR_PASS, eff_SR_FAIL))
-#            passfailSR = selection.ApplySTagTopTag('SR', top_tagger, 0.8, photon_tagger, 1)
-            passfailSR_SF = selection.ApplySTagTopTagSF('SR', top_tagger, 0.8, photon_tagger, 1)
+#            selection.a.Define('DiPhotonCatSF','updatePhotonTag(DiPhotonCat,Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,{0},{1})'.format(eff_SR_PASS, eff_SR_FAIL))
+            passfailSR = selection.ApplySTagTopTag('SR', top_tagger, 0.8, photon_tagger, 1)
+#            passfailSR_SF = selection.ApplySTagTopTagSF('SR', top_tagger, 0.8, photon_tagger, 1)
 	# rkey: SR/CR, pfkey: pass/loose/fail
 
             print('ABOUT TO PLOT....')
-            for rkey,rpair in {"SR":passfailSR_SF,"CR":passfailCR_SF}.items():
+            for rkey,rpair in {"SR":passfailSR,"CR":passfailCR}.items():
               for pfkey,n in rpair.items():
                 mod_name = "%s_%s_%s"%('TvsQCD_cutBased',rkey,pfkey)
                 print(mod_name)
