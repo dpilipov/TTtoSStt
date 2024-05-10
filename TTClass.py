@@ -47,10 +47,12 @@ class TTClass:
 #DP EDIT
 #	    16:['HLT_PFHT800','HLT_PFHT900','HLT_Diphoton30EB_18EB_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55','HLT_Diphoton30PV_18PV_R9Id_AND_IsoCaloId_AND_HE_R9Id_DoublePixelVeto_Mass55','HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_DoublePixelSeedMatch_Mass70','HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass90','HLT_Diphoton30_18_Solid_R9Id_AND_IsoCaloId_AND_HE_R9Id_Mass55','HLT_DoublePhoton60','HLT_DoublePhoton85'],
             16:['HLT_PFHT800','HLT_PFHT900'],
+#            17:['HLT_PFHT1050','HLT_AK8PFJet500'],
             17:["HLT_PFHT1050","HLT_AK8PFJet500","HLT_AK8PFHT750_TrimMass50","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet400_TrimMass30"],
             19:['HLT_PFHT1050','HLT_AK8PFJet500'], # just use 19 for trigger script for 17b, 17all
-            #18:["HLT_PFHT1050","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet500","HLT_AK8PFJet400_TrimMass30","HLT_AK8PFHT750_TrimMass50"]
-            18:['HLT_AK8PFJet400_TrimMass30','HLT_AK8PFHT850_TrimMass50','HLT_PFHT1050']
+            18:["HLT_PFHT1050","HLT_AK8PFHT800_TrimMass50","HLT_AK8PFJet500","HLT_AK8PFJet400_TrimMass30","HLT_AK8PFHT750_TrimMass50"]
+#            18:['HLT_PFHT1050','HLT_AK8PFJet500']
+#            18:['HLT_AK8PFJet400_TrimMass30','HLT_AK8PFHT850_TrimMass50','HLT_PFHT1050']
         }
 
         if 'Data' in inputfile:		# SingleMuonDataX_year and DataX_year are possible data inputfile names
@@ -73,10 +75,15 @@ class TTClass:
         self.a.Define('DijetIds','PickDijets(FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop)') 
         self.a.Cut('preselected','DijetIds[0]> -1 && DijetIds[1] > -1') #Cut the data according to 2 AK8 jets
     #DP edit: also add electron-veto photon AND photons within the acceptable barrel region
-        self.a.Define('DiphotonIds','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass)')
+        self.a.Define('DiphotonIds','PickDiphotons(Photon_pt,Photon_eta,Photon_phi,Photon_mass,Photon_cutBased)')
+#        self.a.Define('DiphotonTagIds','PickDiphotonsTag(Photon_pt,Photon_eta,Photon_phi,Photon_mass,Photon_cutBased,1)')
         self.a.Cut('prePselected','DiphotonIds[0]> -1 && DiphotonIds[1] > -1') #Cut the data according to 2 photons
+        self.a.Cut('prePselectedPt','Photon_pt[DiphotonIds[0]] > 25 && Photon_pt[DiphotonIds[0]] > 25') #Cut according to minimum photon pt
         self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonIds[0]] && Photon_electronVeto[DiphotonIds[1]]')
         self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonIds[0]] || Photon_isScEtaEE[DiphotonIds[0]]) && (Photon_isScEtaEB[DiphotonIds[1]] || Photon_isScEtaEE[DiphotonIds[1]])')
+#        self.a.Cut('prePselected','DiphotonTagIds[0]> -1 && DiphotonTagIds[1] > -1') #Cut the data according to 2 photons
+#        self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonTagIds[0]] && Photon_electronVeto[DiphotonTagIds[1]]')
+#        self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonTagIds[0]] || Photon_isScEtaEE[DiphotonTagIds[0]]) && (Photon_isScEtaEB[DiphotonTagIds[1]] || Photon_isScEtaEE[DiphotonTagIds[1]])')
         return self.a.GetActiveNode()
 
     #now we define the selection according to the following standard: 2 top tagging AK8
@@ -85,8 +92,8 @@ class TTClass:
         self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[0]] > {}'.format(Ttagparam))
         self.a.Cut('TopTagging','FatJet_particleNet_TvsQCD[DijetIds[1]] > {}'.format(Ttagparam))
     #DP edit: also add Photon tag selection
-        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[0]] > {}'.format(Ptagparam))
-        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[1]] > {}'.format(Ptagparam))
+#        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[0]] > {}'.format(Ptagparam))
+#        self.a.Cut('PhotonTagging','Photon_mvaID[DiphotonIds[1]] > {}'.format(Ptagparam))
         return self.a.GetActiveNode()
 
 
@@ -141,17 +148,21 @@ class TTClass:
 	self.NPT = self.getNweighted()
 	self.AddCutflowColumn(self.NPT, "NPT")
 
-        self.a.Cut('ApT', 'Photon_pt[0] > {0}  && Photon_pt[1] > {0}'.format(self.cuts['Apt']))
-        self.NAPT = self.getNweighted()
-        self.AddCutflowColumn(self.NAPT, "NAPT")
+#        self.a.Cut('ApT', 'Photon_pt[0] > {0}  && Photon_pt[1] > {0}'.format(self.cuts['Apt']))
+#        self.NAPT = self.getNweighted()
+#        self.AddCutflowColumn(self.NAPT, "NAPT")
 
         self.a.Define('DijetIdxs','PickDijets(FatJet_pt, FatJet_eta, FatJet_phi, FatJet_msoftdrop)')
         self.a.Cut('dijetsExist','DijetIdxs[0] > -1 && DijetIdxs[1] > -1')
         self.NKIN = self.getNweighted()
         self.AddCutflowColumn(self.NKIN, "NKIN")
 
-        self.a.Define('DiphotonIdxs','PickDiphotons(Photon_pt, Photon_eta, Photon_phi, Photon_mass)')
-        self.a.Cut('diphotonsExist','DiphotonIdxs[0] > {0} && DiphotonIdxs[1] > {0}'.format(self.cuts['mvaID']))
+        self.a.Define('DiphotonIdxs','PickDiphotons(Photon_pt, Photon_eta, Photon_phi, Photon_mass,Photon_cutBased)')
+#        self.a.Define('DiphotonTagIdxs','PickDiphotonsTag(Photon_pt, Photon_eta, Photon_phi, Photon_mass, Photon_cutBased, 1)')
+#        self.a.Cut('diphotonsExist0','DiphotonIdxs[0] > -1 && DiphotonIdxs[1] > -1')
+#        self.NPHOTON = self.getNweighted()
+#        self.AddCutflowColumn(self.NPHOTON, "NPHOTON")
+        self.a.Cut('diphotonsExist','Photon_pt[DiphotonIdxs[0]] > {0} && Photon_pt[DiphotonIdxs[1]] > {0}'.format(self.cuts['Apt']))
 	self.NPHOTONKIN = self.getNweighted()
 	self.AddCutflowColumn(self.NPHOTONKIN, "NPHOTONKIN")
 
@@ -159,6 +170,8 @@ class TTClass:
         self.a.Define('Dijet_vect','hardware::TLvector(Dijet_pt, Dijet_eta, Dijet_phi, Dijet_msoftdrop)')
         self.a.SubCollection('Diphoton','Photon','DiphotonIdxs',useTake=True)
         self.a.Define('Diphoton_vect','hardware::TLvector(Diphoton_pt, Diphoton_eta, Diphoton_phi, Diphoton_mass)')
+#        self.a.SubCollection('DiphotonTag','Photon','DiphotonTagIdxs',useTake=True)
+#        self.a.Define('DiphotonTag_vect','hardware::TLvector(DiphotonTag_pt, DiphotonTag_eta, DiphotonTag_phi, DiphotonTag_mass)')
 
 	self.a.Define('deltaEta','abs(Dijet_eta[0]-Dijet_eta[1])')
 	self.a.Cut('deltaEta_cut','deltaEta < 1.6')
@@ -166,9 +179,11 @@ class TTClass:
 	self.AddCutflowColumn(self.NDELTAETA,'NDELTAETA')
     #DP edit: also add electron-veto photon AND photons within the acceptable barrel region
         self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonIdxs[0]] && Photon_electronVeto[DiphotonIdxs[1]]')
+#        self.a.Cut('photonNotElec','Photon_electronVeto[DiphotonTagIdxs[0]] && Photon_electronVeto[DiphotonTagIdxs[1]]')
         self.NPHOTONNOTELEC = self.getNweighted()
         self.AddCutflowColumn(self.NPHOTONNOTELEC,'NPHOTONNOTELEC')
         self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonIdxs[0]] || Photon_isScEtaEE[DiphotonIdxs[0]]) && (Photon_isScEtaEB[DiphotonIdxs[1]] || Photon_isScEtaEE[DiphotonIdxs[1]])')
+#        self.a.Cut('photonBaccept','(Photon_isScEtaEB[DiphotonTagIdxs[0]] || Photon_isScEtaEE[DiphotonTagIdxs[0]]) && (Photon_isScEtaEB[DiphotonTagIdxs[1]] || Photon_isScEtaEE[DiphotonTagIdxs[1]])')
         self.NPHOTONINBARR = self.getNweighted()
         self.AddCutflowColumn(self.NPHOTONINBARR,'NPHOTONINBARR')
         return self.a.GetActiveNode()
@@ -184,10 +199,54 @@ class TTClass:
                     self.a.Cut('HEM','%s[0] > 0'%(HEM_worker.GetCall(evalArgs={"FatJet_eta":"Dijet_eta","FatJet_phi":"Dijet_phi"})))
 
             else:
+#ADDED THE FOLLOWING FOR MC / PDF CALCS
+                # Parton shower weights 
+                #	- https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopSystematics#Parton_shower_uncertainties
+                #	- "Default" variation: https://twiki.cern.ch/twiki/bin/view/CMS/HowToPDF#Which_set_of_weights_to_use
+                #	- https://github.com/mroguljic/Hgamma/blob/409622121e8ab28bc1072c6d8981162baf46aebc/templateMaker.py#L210
+                self.a.Define("ISR__up","PSWeight[2]")
+                self.a.Define("ISR__down","PSWeight[0]")
+                self.a.Define("FSR__up","PSWeight[3]")
+                self.a.Define("FSR__down","PSWeight[1]")
+                genWCorr    = Correction('genW','TIMBER/Framework/TopPhi_modules/BranchCorrection.cc',corrtype='corr',mainFunc='evalCorrection') # workaround so we can have multiple BCs
+                self.a.AddCorrection(genWCorr, evalArgs={'val':'genWeight'})
+                #ISRcorr = Correction('ISRunc', 'TIMBER/Framework/TopPhi_modules/BranchCorrection.cc', mainFunc='evalUncert', corrtype='uncert')
+                #FSRcorr = Correction('FSRunc', 'TIMBER/Framework/TopPhi_modules/BranchCorrection.cc', mainFunc='evalUncert', corrtype='uncert')
+                ISRcorr = genWCorr.Clone("ISRunc",newMainFunc="evalUncert",newType="uncert")
+                FSRcorr = genWCorr.Clone("FSRunc",newMainFunc="evalUncert",newType="uncert")
+                self.a.AddCorrection(ISRcorr, evalArgs={'valUp':'ISR__up','valDown':'ISR__down'})
+                self.a.AddCorrection(FSRcorr, evalArgs={'valUp':'FSR__up','valDown':'FSR__down'})
+#BACK TO ORIGINAL...
                 self.a = ApplyPU(self.a, 'THpileup.root', self.year, ULflag=True, histname='{}_{}'.format(self.setname,self.year))
-                self.a.AddCorrection(
-                    Correction('Pdfweight','TIMBER/Framework/include/PDFweight_uncert.h',[self.a.lhaid],corrtype='uncert')
-                )
+#ADDED THE FOLLOWING FOR QCD 
+# QCD factorization and renormalization corrections (only apply to non-signal MC in fit, but generate signal w this variation just in case..)
+                # For some reason, diboson processes don't have the LHEScaleWeight branch, so don't apply to those either.
+                if (('WW' not in self.setname) and ('WZ' not in self.setname) and ('ZZ' not in self.setname)):
+                    # First instatiate a correction module for the factorization correction
+                    facCorr = Correction('QCDscale_factorization','LHEScaleWeights.cc',corrtype='weight',mainFunc='evalFactorization')
+                    self.a.AddCorrection(facCorr, evalArgs={'LHEScaleWeights':'LHEScaleWeight'})
+                    # Now clone it and call evalRenormalization for the renormalization correction
+                    renormCorr = facCorr.Clone('QCDscale_renormalization',newMainFunc='evalRenormalization',newType='weight')
+                    self.a.AddCorrection(renormCorr, evalArgs={'LHEScaleWeights':'LHEScaleWeight'})
+                    # Now do one for the combined correction
+                    combCorr = facCorr.Clone('QCDscale_combined',newMainFunc='evalCombined',newType='weight')
+                    self.a.AddCorrection(combCorr, evalArgs={'LHEScaleWeights':'LHEScaleWeight'})
+                    # And finally, do one for the uncertainty
+                    # See: https://indico.cern.ch/event/938672/contributions/3943718/attachments/2073936/3482265/MC_ContactReport_v3.pdf (slide 27)
+                    QCDScaleUncert = facCorr.Clone('QCDscale_uncert',newMainFunc='evalUncert',newType='uncert')
+                    self.a.AddCorrection(QCDScaleUncert, evalArgs={'LHEScaleWeights':'LHEScaleWeight'})
+#THIS WAS THE ORIGINAL...NOW COMMENTED OUT
+#                self.a.AddCorrection(
+#                    Correction('Pdfweight','TIMBER/Framework/include/PDFweight_uncert.h',[self.a.lhaid],corrtype='uncert')
+#                )
+# THIS IS NOW THE NEW STUFF
+                # PDF weight correction - https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopSystematics#PDF
+                if self.a.lhaid != -1:
+                    print('PDFweight correction: LHAid = {}'.format(self.a.lhaid))
+                    self.a.AddCorrection(
+                        Correction('Pdfweight','TIMBER/Framework/include/PDFweight_uncert.h',[self.a.lhaid],corrtype='uncert')
+                    )
+#BACK TO THE ORIGINAL
                 if self.year == '16' or self.year == '17' or self.year == '16APV':
 		    # this is valid for calculating Prefire weights by TIMBER, but NanoAODv9 contains the weights as TLeafs in the Events TTree. So, let's just use that
 		    '''
@@ -224,8 +283,30 @@ class TTClass:
         
         else:
             if not self.a.isData:
+#DP: EDIT FOR PDF CORRRECTIONS, UNCERT.
+                # I forgot to add the `genW` branch in snapshots, so just redo it here...
+                # In the end it doesn't really matter, since the correction just uses genWeight.
+                # One could also opt to add genWeight*GetXsecScale() in the MakeWeightCols() call as well..
+                # This is EXTREMELY IMPORTANT for getting the event weighting correct
+                genWCorr = Correction('genW','TIMBER/Framework/TopPhi_modules/BranchCorrection.cc',corrtype='corr',mainFunc='evalCorrection')
+                #self.a.AddCorrection(Correction('genW',corrtype='corr'))
+                self.a.AddCorrection(genWCorr, evalArgs={'val':'genWeight'})
+#NOW ORIGINAL...
                 self.a.AddCorrection(Correction('Pileup',corrtype='weight'))
+#DP: EDIT ADD...
+                self.a.AddCorrection(Correction('ISRunc',corrtype='uncert'))
+                self.a.AddCorrection(Correction('FSRunc',corrtype='uncert'))
+#ORIGINAL...
                 self.a.AddCorrection(Correction('Pdfweight',corrtype='uncert'))
+
+#DP: EDIT MORE TO ADD
+                # Perhaps the first three should be uncert types, but because nominal = 1.0, it's functionally equivalent
+                self.a.AddCorrection(Correction('QCDscale_factorization',corrtype='weight'))
+                self.a.AddCorrection(Correction('QCDscale_renormalization',corrtype='weight'))
+                self.a.AddCorrection(Correction('QCDscale_combined',corrtype='weight'))
+                self.a.AddCorrection(Correction('QCDscale_uncert',corrtype='uncert'))
+#BACK TO ORIGINAL...
+
                 if self.year == '16' or self.year == '17' or self.year == '16APV':
                     #self.a.AddCorrection(Correction('Prefire',corrtype='weight'))
 		    self.a.AddCorrection(Correction('L1PreFiringWeight',corrtype='weight'))
@@ -286,8 +367,6 @@ class TTClass:
         self.a.Define('Aphi1','AA_vector[5]')
         self.a.Define('Amass0','AA_vector[6]')
         self.a.Define('Amass1','AA_vector[7]')
-        self.a.Define('AmvaID0','AA_vector[8]')
-        self.a.Define('AmvaID1','AA_vector[9]')
         self.a.Define('AA_vectorI','PickLeadingDiPhotonsI(Diphoton_pt,Diphoton_cutBased)')
         self.a.Define('AcutBased0','AA_vectorI[0]')
         self.a.Define('AcutBased1','AA_vectorI[1]')
@@ -313,7 +392,7 @@ class TTClass:
 
         columns = [
             'Apt0','Apt1','Aeta0','Aeta1','Aphi0','Aphi1','Amass0','Amass1',
-            'AmvaID0','AmvaID1','AcutBased0','AcutBased1','nAA','jetRegion',
+            'AcutBased0','AcutBased1','nAA','jetRegion',
             'jptALL0','jptALL1',
             'jTvsQCDALL0','jTvsQCDALL1',
             'TPmass_LNL',#DP EDIT 'TPmass_80','TPmass_70',#DP EDIT
@@ -328,10 +407,12 @@ class TTClass:
             'Dijet_jetId', 'nFatJet', 'Dijet_JES_nom',
             'Diphoton_pt','Diphoton_eta','Diphoton_phi','Diphoton_mass',
             'Diphoton_mvaID','Diphoton_cutBased',
+#            'DiphotonTag_pt','DiphotonTag_eta','DiphotonTag_phi','DiphotonTag_mass',
+#            'DiphotonTag_mvaID','DiphotonTag_cutBased',
             'HLT_PFHT.*', 'HLT_PFJet.*', 'HLT_AK8.*', 'HLT_Mu50', 'HLT_IsoMu*', 'HLT_Ele27_WPTight_Gsf', 'HLT_Ele35_WPTight_Gsf',
             'HLT_Diphoton*','HLT_DoublePhoton*',
             'event', 'eventWeight', 'luminosityBlock', 'run',
-	    'NPROC', 'NFLAGS', 'NJETS', 'NPHOTONS','NJETID', 'NPT', 'NAPT', 'NKIN', 
+	    'NPROC', 'NFLAGS', 'NJETS', 'NPHOTONS','NJETID', 'NPT', 'NKIN', 
             'NPHOTONKIN','NDELTAETA','NPHOTONNOTELEC', 'NPHOTONINBARR',
             'NTightMu', 'NTightEl', 'NGoodMu', 'NGoodEl', 'PreLepVeto', 'PostLepVeto'
         ]
@@ -343,7 +424,15 @@ class TTClass:
                             'Dijet_JER_nom','Dijet_JER_up','Dijet_JER_down',
                             'Dijet_JMS_nom','Dijet_JMS_up','Dijet_JMS_down',
                             'Dijet_JMR_nom','Dijet_JMR_up','Dijet_JMR_down'])
-            columns.extend(['Pileup__nom','Pileup__up','Pileup__down','Pdfweight__nom','Pdfweight__up','Pdfweight__down'])
+#DP: EDIT - ADDED ....
+#            columns.extend(['Pileup__nom','Pileup__up','Pileup__down','Pdfweight__nom','Pdfweight__up','Pdfweight__down'])
+            columns.extend(['Pileup__nom','Pileup__up','Pileup__down','Pdfweight__nom','Pdfweight__up','Pdfweight__down','ISRunc__up','ISRunc__down','FSRunc__up','FSRunc__down'])
+            # QCD scale variations
+            columns.extend(['QCDscale_factorization__nom','QCDscale_factorization__up','QCDscale_factorization__down'])
+            columns.extend(['QCDscale_renormalization__nom','QCDscale_renormalization__up','QCDscale_renormalization__down'])
+            columns.extend(['QCDscale_combined__nom','QCDscale_combined__up','QCDscale_combined__down'])
+            columns.extend(['QCDscale_uncert__up','QCDscale_uncert__down'])
+#DP: END OF EDIT
             if self.year == '16' or self.year == '17' or self.year == '16APV':
                 #columns.extend(['Prefire__nom','Prefire__up','Prefire__down'])					# these are the TIMBER prefire calculations (don't include)
 		columns.extend(['L1PreFiringWeight_Nom', 'L1PreFiringWeight_Up', 'L1PreFiringWeight_Dn'])	# keep the TIMBER Prefire calculations, but also include these from NanoAODv9
@@ -370,17 +459,28 @@ class TTClass:
         self.a.Define('Dijet_vect_trig','hardware::TLvector(Dijet_pt, Dijet_eta, Dijet_phi, Dijet_msoftdrop)')
         self.a.Define('Top1_vect_trig','hardware::TLvector(Dijet_pt[0], Dijet_eta[0], Dijet_phi[0], Dijet_msoftdrop[0])')
         self.a.Define('Photon1_vect','hardware::TLvector(Diphoton_pt[0],Diphoton_eta[0], Diphoton_phi[0], Diphoton_mass[0])')
-        self.a.Define('Photon1_vect_trig','hardware::TLvector(Apt0,Aeta0,Aphi0,Amass0)')
+#        self.a.Define('Photon1_vect_trig','hardware::TLvector(Apt0,Aeta0,Aphi0,Amass0)')
         self.a.Define('Photon2_vect','hardware::TLvector(Diphoton_pt[1],Diphoton_eta[1], Diphoton_phi[1], Diphoton_mass[1])')
-        self.a.Define('Photon2_vect_trig','hardware::TLvector(Apt1,Aeta1,Aphi1,Amass1)')
-#DP EDIT to be changed!!!!
-        self.a.Define('PhotonEffSF','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,0)')
-        self.a.Define('PhotonEffSF1','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,1)')
-        self.a.Define('PhotonEffSF2','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,2)')
-        self.a.Define('DiPhotonCat','getDiPhotonCat(Diphoton_cutBased,1.0)')
+#        self.a.Define('Photon2_vect_trig','hardware::TLvector(Apt1,Aeta1,Aphi1,Amass1)')
+#DP EDIT comment out next four lines when running TTtrig and TTdist!!!
+#        self.a.Define('PhotonEffSF','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,0,"2018")')
+#        self.a.Define('PhotonEffSF1','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,1,"2018")')
+#        self.a.Define('PhotonEffSF2','getPhotonSF(Diphoton_pt,Diphoton_eta,Diphoton_cutBased,1.0,2,"2018")')
+#        self.a.Define('DiPhotonCat','getDiPhotonCat(Diphoton_cutBased,1.0)')
+#        self.a.Define('Atagpt0','DiphotonTag_pt[0]')
+#        self.a.Define('Photon1_vect','hardware::TLvector(DiphotonTag_pt[0],DiphotonTag_eta[0], DiphotonTag_phi[0], DiphotonTag_mass[0])')
+#        self.a.Define('Photon1_vect_trig','hardware::TLvector(DiphotonTag_pt[0],DiphotonTag_eta[0], DiphotonTag_phi[0], DiphotonTag_mass[0])')
+#        self.a.Define('Photon2_vect','hardware::TLvector(DiphotonTag_pt[1],DiphotonTag_eta[1], DiphotonTag_phi[1], DiphotonTag_mass[1])')
+#        self.a.Define('Photon2_vect_trig','hardware::TLvector(DiphotonTag_pt[1],DiphotonTag_eta[1], DiphotonTag_phi[1], DiphotonTag_mass[1])')
+#        self.a.Define('PhotonEffSF','getPhotonSF(DiphotonTag_pt,DiphotonTag_eta,DiphotonTag_cutBased,1.0,0,%s)'%self.year)
+#        self.a.Define('PhotonEffSF1','getPhotonSF(DiphotonTag_pt,DiphotonTag_eta,DiphotonTag_cutBased,1.0,1,%s)'%self.year)
+#        self.a.Define('PhotonEffSF2','getPhotonSF(DiphotonTag_pt,DiphotonTag_eta,DiphotonTag_cutBased,1.0,2,%s)'%self.year)
+#        self.a.Define('DiPhotonCat','getDiPhotonCat(DiphotonTag_cutBased,1.0)')
+
 #        self.a.Define('DiPhotonCat','int(((Diphoton_cutBased[0] >= 1) && (Diphoton_cutBased[1] >= 1)))+(1-int(((Diphoton_cutBased[0] < 1) && (Diphoton_cutBased[1] < 1))))')
-        self.a.Define('Smass_trig','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
-        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
+#        self.a.Define('Smass_trig','hardware::InvariantMass({Photon1_vect_trig,Photon2_vect_trig})')
+        self.a.Define('Smass','hardware::InvariantMass({Photon1_vect,Photon2_vect})')
+        self.a.Define('Smass_trig','Smass')
         self.a.Define('m_javg','(Dijet_msoftdrop[0]+Dijet_msoftdrop[1])/2')
 #        self.a.Define('Diph_mvaID','ConvertToVecF(AmvaID0,AmvaID1)')
         # JME variations
@@ -402,7 +502,7 @@ class TTClass:
         self.a.Define('Top2_vect','hardware::TLvector(Dijet_pt_corr[1], Dijet_eta[1], Dijet_phi[1], Dijet_msoftdrop_corrT[1])')
         self.a.Define('mth1','hardware::InvariantMass({Top1_vect,Photon1_vect,Photon2_vect})')
         self.a.Define('mth2','hardware::InvariantMass({Top2_vect,Photon1_vect,Photon2_vect})')
-        self.a.Define('topchoice','int((Dijet_particleNet_TvsQCD[0]>0.8) || (Dijet_particleNet_TvsQCD[1])<0.8)')
+        self.a.Define('topchoice','int((Dijet_particleNet_TvsQCD[0]>0.8) || (Dijet_particleNet_TvsQCD[1]<0.8))')
         self.a.Define('mth','topchoice*mth1+(1-topchoice)*mth2')
 #        self.a.Define('mth','mth1')
         # for trigger studies
@@ -700,6 +800,81 @@ class TTClass:
         self.a.SetActiveNode(checkpoint)
         return passFailSF
 
+    def ApplySTagTopTagTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
+        assert(SRorCR == 'SR' or SRorCR == 'CR')
+        checkpoint = self.a.GetActiveNode()
+        nTotOrig = self.getNweighted()
+        print("nTotOrig = {}".format(nTotOrig))
+        nTotSF = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+        print("nTotSF = {}".format(nTotSF))
+        passFail = {}
+        passFailSF = {}
+        # Higgs Pass + cutflow info
+        if (SRorCR == 'SR'):
+            totSR = self.a.Cut('STagSR','(Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP))
+            self.higgs_SR = self.getNweighted()
+            print('Number of Events in SR = {}'.format(self.higgs_SR))
+            self.eventSumSR = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            self.AddCutflowColumn(self.higgs_SR, "higgs_SR")
+            print('Obtaining efficiencies for SR')
+            eff = self.higgs_SR/nTotOrig
+            print('SR: eff = {}'.format(eff*100))
+            effSF = self.eventSumSR/nTotSF
+            print('SR: effSF = {}'.format(effSF*100))
+            passFail["pass"] = self.a.Cut('STagSR_pass','(Diphoton_{2}[0] >= {3}) && (Diphoton_{2}[1] >= {3}) && (Dijet_{0}[0] > {1}) && (Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsP_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_SR, "higgsP_SR")
+            print('Number of Events in SR Pass = {}'.format(self.higgsP_SR))
+            effpass = self.higgsP_SR/nTotOrig
+            print('SR: effpass = {}'.format(effpass*100))
+            self.eventSumSRpass = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFpass = self.eventSumSRpass/nTotSF
+            print('SR: effSFpass = {}'.format(effSFpass*100))
+#            self.a.Define('passFailSF','hardware::MultiHadamardProduct(%s,PhotonEffSF)'%passFail)
+#            effnorm = effSFpass/effpass
+            self.a.SetActiveNode(checkpoint)
+            passFail["fail"] = self.a.Cut('STagSR_fail','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsF_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_SR, "higgsF_SR")
+            efffail = self.higgsF_SR/nTotOrig
+            print('SR: efffail = {}'.format(efffail*100))
+            self.eventSumSRfail = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfail = self.eventSumSRfail/nTotSF
+            print('SR: effSFfail = {}'.format(effSFfail*100))
+            self.eventSumSRfail = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfail = self.eventSumSRfail/nTotSF
+            print('SR: effSFfail = {}'.format(effSFfail*100))
+            self.a.SetActiveNode(checkpoint)
+            passFail["failfail"] = self.a.Cut('STagSR_failfail','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && (Dijet_{0}[0] > {1} && Dijet_{0}[1] > {1})'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsFF_SR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_SR, "higgsFF_SR")
+            efffailfail = self.higgsFF_SR/nTotOrig
+            print('SR: efffailfail = {}'.format(efffailfail*100))
+            self.eventSumSRfailfail = self.a.DataFrame.Sum("PhotonEffSF").GetValue()
+            effSFfailfail = self.eventSumSRfailfail/nTotSF
+            print('SR: effSFfail fail = {}'.format(effSFfailfail*100))
+        else:
+            totCR = self.a.Cut('STagCR','((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP))
+            self.higgs_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgs_CR, "higgs_CR")
+            print('Obtaining efficiencies for CR')
+            eff = self.higgs_CR/nTotOrig
+            print('CR: eff = {}'.format(eff*100.))
+            passFail["pass"] = self.a.Cut('STagCR_pass','(Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] >= {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsP_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsP_CR, "higgsP_CR")
+        # Higgs Fail + cutflow info
+            self.a.SetActiveNode(checkpoint)
+            passFail["fail"] = self.a.Cut('STagCR_fail','((Diphoton_{2}[0] >= {3} && Diphoton_{2}[1] < {3}) || (Diphoton_{2}[1] >= {3} && Diphoton_{2}[0] < {3})) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsF_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsF_CR, "higgsF_CR")
+            self.a.SetActiveNode(checkpoint)
+            passFail["failfail"] = self.a.Cut('STagCR_failfail','(Diphoton_{2}[0] < {3} && Diphoton_{2}[1] < {3}) && ((Dijet_{0}[0] > {1} && Dijet_{0}[1] <{1}) || (Dijet_{0}[1] > {1} && Dijet_{0}[0] <{1}))'.format(Toptagger, ToptaggerWP, Stagger, StaggerWP))
+            self.higgsFF_CR = self.getNweighted()
+            self.AddCutflowColumn(self.higgsFF_CR, "higgsFF_CR")
+        # reset node state, return dict
+        self.a.SetActiveNode(checkpoint)
+        return passFail
 
     def ApplySTagTopTag(self, SRorCR, Toptagger, ToptaggerWP, Stagger, StaggerWP):
         assert(SRorCR == 'SR' or SRorCR == 'CR')
